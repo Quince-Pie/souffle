@@ -24,19 +24,24 @@ void status_print(enum Status status, const char *file, int lineno, const char *
   status_print(Success,__FILE__, __LINE__, NULL)
 // ---------------- ASSERTIONS ---------------- 
 
-#define ASSERT_TRUE(cond) ({                          \
-    if (!cond) {                                      \
-        LOG_FAIL("Expected: true. Found: %s", #cond); \
-    } else {                                          \
-        LOG_SUCCESS();                                \
-    }                                                 \
+#define ASSERT_TRUE(cond) ({                                \
+    if (!cond) {                                            \
+        LOG_FAIL("Expected: \"true\", got: \"%s\"", #cond); \
+        *status = Fail;                                     \
+        return;                                             \
+    } else {                                                \
+        LOG_SUCCESS();                                      \
+    }                                                       \
 })
 
 #define ASSERT_EQ(a, b) ({                                                   \
     static_assert(_Generic((a), typeof(b): 1, default: 0), "Type mismatch"); \
     if (a != b) {                                                            \
-        LOG_FAIL("Expected: %d. Found: %d", a, b);                           \
+        LOG_FAIL("Expected: \"%d\", got: \"%d\"", a, b);                     \
+        *status = Fail;                                     \
+        return;                                                              \
     }                                                                        \
+    LOG_SUCCESS();                                                           \
 })
 
 #define ASSERT_NE(a, b) ({                                                   \
@@ -73,7 +78,7 @@ void status_print(enum Status status, const char *file, int lineno, const char *
 // -------------- ASSERTIONS END --------------
 
 
-typedef void (*TestFunc)();
+typedef void (*TestFunc)(enum Status *status);
 
 typedef struct TestNode {
     const char *name;
@@ -85,11 +90,11 @@ void register_test(const char *suite, const char *name, TestFunc func);
 void run_all_tests();
 
 #define TEST(suite, name)                                      \
-    void suite##_##name();                                     \
+    void suite##_##name(enum Status *status);                  \
     __attribute__((constructor)) void reg_##suite##_##name() { \
         register_test(#suite, #name, suite##_##name);          \
     }                                                          \
-    void suite##_##name()
+    void suite##_##name(enum Status *status)
 
 
 
