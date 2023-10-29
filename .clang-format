@@ -1,0 +1,13 @@
+BasedOnStyle: LLVM
+IndentWidth: 4
+UseTab: Never
+TabWidth: 4
+ColumnLimit: 100
+PointerAlignment: Right
+
+
+IncludeCategories:
+  - Regex:           '^".*\.h"'
+    Priority:        9
+  - Regex:           '^<.*\.h>'
+    Priority:        8
