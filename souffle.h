@@ -38,7 +38,7 @@ void status_print(enum Status status, const char *file, int lineno, const char *
     static_assert(_Generic((a), typeof(b): 1, default: 0), "Type mismatch"); \
     if (a != b) {                                                            \
         LOG_FAIL("Expected: \"%d\", got: \"%d\"", a, b);                     \
-        *status = Fail;                                     \
+        *status = Fail;                                                      \
         return;                                                              \
     }                                                                        \
     LOG_SUCCESS();                                                           \
@@ -47,22 +47,31 @@ void status_print(enum Status status, const char *file, int lineno, const char *
 #define ASSERT_NE(a, b) ({                                                   \
     static_assert(_Generic((a), typeof(b): 1, default: 0), "Type mismatch"); \
     if (a == b) {                                                            \
-        assert_fail(#a " == " #b, __FILE__, __LINE__);                       \
+        LOG_FAIL("Expected: \"%d\", got: \"%d\"", a, b);                     \
+        *status = Fail;                                                      \
+        return;                                                              \
     }                                                                        \
+    LOG_SUCCESS();                                                           \
 })
 
 #define ASSERT_LT(a, b) ({                                                   \
     static_assert(_Generic((a), typeof(b): 1, default: 0), "Type mismatch"); \
     if (a >= b) {                                                            \
-        assert_fail(#a " >= " #b, __FILE__, __LINE__);                       \
+        LOG_FAIL("Expected: \"%d\", got: \"%d\"", a, b);                     \
+        *status = Fail;                                                      \
+        return;                                                              \
     }                                                                        \
+    LOG_SUCCESS();                                                           \
 })
 
-#define ASSERT_GT(a, b) ({ \
+#define ASSERT_GT(a, b) ({                                                   \
     static_assert(_Generic((a), typeof(b): 1, default: 0), "Type mismatch"); \
     if (a <= b) {                                                            \
-        assert_fail(#a " <= " #b, __FILE__, __LINE__);                       \
+        LOG_FAIL("Expected: \"%d\", got: \"%d\"", a, b);                     \
+        *status = Fail;                                                      \
+        return;                                                              \
     }                                                                        \
+    LOG_SUCCESS();                                                           \
 })
 
 #define ASSERT_ARR_EQ(arr1, arr2, size) ({                                                        \
@@ -80,11 +89,17 @@ void status_print(enum Status status, const char *file, int lineno, const char *
 
 typedef void (*TestFunc)(enum Status *status);
 
-typedef struct TestNode {
-    const char *name;
-    TestFunc func;
-    struct TestNode *next;
-} TestNode;
+typedef struct Test {
+  const char* name;
+  TestFunc func;  
+} Test;
+
+typedef struct TestsVec {
+    Test *tests;    
+    size_t capacity;
+    size_t len;
+} TestsVec;
+
 
 void register_test(const char *suite, const char *name, TestFunc func);
 void run_all_tests();

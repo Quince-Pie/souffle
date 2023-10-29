@@ -8,6 +8,45 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
+#define GREEN "\033[0;32m"
+#define RED "\033[0;31m"
+#define YELLOW "\033[0;33m"
+#define RESET "\033[0m"
+
+KHASH_MAP_INIT_STR(str_map, TestsVec*)
+khash_t(str_map) * test_suites;
+
+static size_t tcount = 0;
+static int largest_test_name = 0;
+
+
+
+TestsVec* test_vec_init() {
+  TestsVec* tv = malloc(sizeof(TestsVec));
+  assert(tv);
+  tv->tests = malloc(128 * sizeof(Test));
+  tv->capacity = 128;
+  tv->len = 0;
+  return tv;
+}
+
+
+void test_vec_free(TestsVec* tv) {
+  free(tv->tests);
+  free(tv);
+}
+
+static void test_vec_push(TestsVec* tv, Test t) {
+  if (tv->len == tv->capacity) {
+    tv->tests = realloc(tv->tests, (size_t)(tv->capacity * 2) * sizeof(Test));
+    assert(tv->tests);
+    tv->capacity *= 2;
+  }
+  tv->tests[tv->len] = t;
+  tv->len++;
+  return;
+}
+
 void status_print(enum Status status, const char *file, int lineno,
                   const char *fmt, ...) {
 
@@ -16,7 +55,8 @@ void status_print(enum Status status, const char *file, int lineno,
   va_start(args, fmt);
   const char *ret_str;
   switch (status) {
-  // NOP, pass is handled in the test runner since we want to know that every assertion was correct
+  // NOP, pass is handled in the test runner since we want to know that every
+  // assertion was correct
   case Success:
     ret_str = "PASSED";
     break;
@@ -32,7 +72,7 @@ void status_print(enum Status status, const char *file, int lineno,
   // Print the log header
 
   if (status == Fail) {
-    fprintf(stderr, " [%s, 0ms] [%s:%d]\n", ret_str, file,
+    fprintf(stderr, " " RED "[%s, 0ms]" RESET " [%s:%d]\n", ret_str, file,
             lineno);
     // Print the log message
     fprintf(stderr, "\t  > Details: ");
@@ -44,12 +84,8 @@ void status_print(enum Status status, const char *file, int lineno,
   va_end(args);
 }
 
-KHASH_MAP_INIT_STR(str_map, TestNode *)
-khash_t(str_map) *test_suites;
 
-static size_t tcount = 0;
-static int largest_test_name = 0;
-//TODO: Change the TestNode from a stupid linked list to a vector.
+// TODO: Change the TestNode from a stupid linked list to a vector.
 void register_test(const char *suite, const char *name, TestFunc func) {
   if (test_suites == NULL) {
     test_suites = kh_init(str_map);
@@ -65,32 +101,28 @@ void register_test(const char *suite, const char *name, TestFunc func) {
     largest_test_name = test_name_len;
   }
   // in order linked list
-  TestNode *node = malloc(sizeof(TestNode));
-  node->name = name;
-  node->func = func;
-  node->next = NULL;
+  Test t = {
+    .func = func,
+    .name = name,
+  };
   if (ret) { // new key; initialize value to NULL
-    kh_value(test_suites, k) = NULL;
+    kh_value(test_suites, k) = test_vec_init();
   }
-  TestNode *head = kh_value(test_suites, k);
-  if (!head) {
-    kh_value(test_suites, k) = node;
-  } else {
-    while (head->next) {
-      head = head->next;
-    }
-    head->next = node;
-  }
+  TestsVec *tv = kh_value(test_suites, k);
+  test_vec_push(tv, t);
   tcount += 1;
 }
 
 void run_all_tests() {
+  assert(test_suites);
   khint_t scount = kh_size(test_suites);
-  printf("=== Test Run Started ===\n");
-  printf("Date: 2023-10-27 | Time: 14:30:00\n");
-  printf("--------------------------------------------------------\n\n");
-  printf("Running %zu tests in %d suites\n", tcount,scount);
-  printf("--------------------------------------------------------\n");
+  fprintf(stderr, "=== Test Run Started ===\n");
+  fprintf(stderr, "Date: 2023-10-27 | Time: 14:30:00\n");
+  fprintf(stderr,
+          "--------------------------------------------------------\n\n");
+  fprintf(stderr, "Running %zu tests in %d suites\n", tcount, scount);
+  fprintf(stderr, "--------------------------------------------------------\n");
+
   int passed = 0;
   int failed = 0;
   int crashed = 0;
@@ -99,20 +131,19 @@ void run_all_tests() {
   for (k = kh_begin(test_suites); k != kh_end(test_suites); ++k) {
     if (kh_exist(test_suites, k)) {
       const char *suite_name = kh_key(test_suites, k);
-      TestNode *test = kh_val(test_suites, k);
-      printf("\n:: Suite: %s ::\n", suite_name);
-      while (test) {
+      TestsVec *tv = kh_val(test_suites, k);
+      fprintf(stderr, "\n:: Suite: %s ::\n", suite_name);
+      for (size_t idx = 0; idx < tv->len; ++idx){
         pid_t pid = fork();
         if (pid == 0) {
-          int padding = largest_test_name -  strlen(test->name);
-          printf("  🧪 %s .........", test->name);
+          int padding = largest_test_name - strlen(tv->tests[idx].name);
+          fprintf(stderr, "  🧪 %s .........", tv->tests[idx].name);
           for (int i = 0; i < padding; ++i) {
-            printf(".");
+            fprintf(stderr, ".");
           }
-          fflush(stdout);
           // child process
           enum Status tstatus = Success;
-          test->func(&tstatus);
+          tv->tests[idx].func(&tstatus);
           exit(tstatus);
         } else {
           // parent process
@@ -122,7 +153,7 @@ void run_all_tests() {
           if (WIFEXITED(status)) {
             switch ((enum Status)WEXITSTATUS(status)) {
             case Success:
-              fprintf(stderr, " [PASSED, 0ms]\n");
+              fprintf(stderr, " " GREEN "[PASSED, 0ms]" RESET "\n");
               passed += 1;
               break;
             case Fail:
@@ -135,26 +166,26 @@ void run_all_tests() {
               unreachable();
             };
           } else if (WIFSIGNALED(status)) {
-            fprintf(stderr, " [CRASHED, ☠ ]\n");
-            crashed += 1;
+              fprintf(stderr, " " RED "[CRASHED, ☠ ]" RESET "\n");
+              crashed += 1;
           }
         }
-        // free the node
-        TestNode *next = test->next;
-        free(test);
-        test = next;
       }
-      // kh_del(str_map, test_suites, k);
+      test_vec_free(tv);
     }
   }
 
   kh_destroy(str_map, test_suites);
-  printf("\n--------------------------------------------------------\n");
-  printf("=== Test Run Summary ===\n");
-  printf("Total Tests: %zu | Passed: %d | Failed: %d | Crashed: %d | Skipped: %d\n", tcount, passed, failed, crashed, skipped);
-  // printf("\n\n▣ Summary: %d Passed; %d Failed; %d Crashed; %d Skipped\n",
-  //        passed, failed, crashed, skipped);
-  printf("--------------------------------------------------------");
+  fprintf(stderr,
+          "\n--------------------------------------------------------\n");
+  fprintf(stderr, "=== Test Run Summary ===\n");
+  fprintf(stderr,
+          "Total Tests: %zu | " GREEN "Passed" RESET ": %d | " RED
+          "Failed" RESET ": %d | " RED "Crashed" RESET ": %d | " YELLOW
+          "Skipped" RESET ": "
+          "%d\n",
+          tcount, passed, failed, crashed, skipped);
+  fprintf(stderr, "--------------------------------------------------------\n");
 }
 
 __attribute__((weak)) int main(void) {
