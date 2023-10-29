@@ -28,10 +28,8 @@ void status_print(enum Status status, const char *file, int lineno, const char *
     if (!cond) {                                            \
         LOG_FAIL("Expected: \"true\", got: \"%s\"", #cond); \
         *status = Fail;                                     \
-        return;                                             \
-    } else {                                                \
-        LOG_SUCCESS();                                      \
     }                                                       \
+    return;                                                 \
 })
 
 #define ASSERT_EQ(a, b) ({                                                   \
@@ -39,9 +37,8 @@ void status_print(enum Status status, const char *file, int lineno, const char *
     if (a != b) {                                                            \
         LOG_FAIL("Expected: \"%d\", got: \"%d\"", a, b);                     \
         *status = Fail;                                                      \
-        return;                                                              \
     }                                                                        \
-    LOG_SUCCESS();                                                           \
+    return;                                                                  \
 })
 
 #define ASSERT_NE(a, b) ({                                                   \
@@ -49,9 +46,8 @@ void status_print(enum Status status, const char *file, int lineno, const char *
     if (a == b) {                                                            \
         LOG_FAIL("Expected: \"%d\", got: \"%d\"", a, b);                     \
         *status = Fail;                                                      \
-        return;                                                              \
     }                                                                        \
-    LOG_SUCCESS();                                                           \
+    return;                                                                  \
 })
 
 #define ASSERT_LT(a, b) ({                                                   \
@@ -59,9 +55,8 @@ void status_print(enum Status status, const char *file, int lineno, const char *
     if (a >= b) {                                                            \
         LOG_FAIL("Expected: \"%d\", got: \"%d\"", a, b);                     \
         *status = Fail;                                                      \
-        return;                                                              \
     }                                                                        \
-    LOG_SUCCESS();                                                           \
+    return;                                                                  \
 })
 
 #define ASSERT_GT(a, b) ({                                                   \
@@ -69,20 +64,19 @@ void status_print(enum Status status, const char *file, int lineno, const char *
     if (a <= b) {                                                            \
         LOG_FAIL("Expected: \"%d\", got: \"%d\"", a, b);                     \
         *status = Fail;                                                      \
-        return;                                                              \
     }                                                                        \
-    LOG_SUCCESS();                                                           \
+    return;                                                                  \
 })
 
-#define ASSERT_ARR_EQ(arr1, arr2, size) ({                                                        \
-    static_assert(_Generic((arr1[0]), typeof(arr2[0]): 1, default: 0), "Element type mismatch");  \
-    for (size_t i = 0; i < size; ++i) {                                                           \
-        if (((arr1)[i] != (arr2)[i])) {                                                           \
-            fprintf(stderr, "Array assertion failed at index %zu: %s != %s\n", i, #arr1, #arr2);  \
-            exit(EXIT_FAILURE);                                                                   \
-        }                                                                                         \
-    }                                                                                             \
-})
+// #define ASSERT_ARR_EQ(arr1, arr2, size) ({                                                        \
+//     static_assert(_Generic((arr1[0]), typeof(arr2[0]): 1, default: 0), "Element type mismatch");  \
+//     for (size_t i = 0; i < size; ++i) {                                                           \
+//         if (((arr1)[i] != (arr2)[i])) {                                                           \
+//             fprintf(stderr, "Array assertion failed at index %zu: %s != %s\n", i, #arr1, #arr2);  \
+//             exit(EXIT_FAILURE);                                                                   \
+//         }                                                                                         \
+//     }                                                                                             \
+// })
 
 // -------------- ASSERTIONS END --------------
 
