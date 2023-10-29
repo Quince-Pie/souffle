@@ -47,11 +47,10 @@ static void test_vec_push(TestsVec *tv, Test t) {
 
 void err_print(const char *file, int lineno, const char *fmt, ...) {
 
-    // Initialize the variable argument list
     va_list args;
     va_start(args, fmt);
     fprintf(stderr, " " RED "[FAILED, 0ms]" RESET " [%s:%d]\n", file, lineno);
-    // Print the log message
+    // Print the expected vs actual message
     fprintf(stderr, "\t  > Details: ");
     vfprintf(stderr, fmt, args);
     fprintf(stderr, "\n\n");
@@ -60,7 +59,6 @@ void err_print(const char *file, int lineno, const char *fmt, ...) {
     va_end(args);
 }
 
-// TODO: Change the TestNode from a stupid linked list to a vector.
 void register_test(const char *suite, const char *name, TestFunc func) {
     if (test_suites == NULL) {
         test_suites = kh_init(str_map);
@@ -75,12 +73,11 @@ void register_test(const char *suite, const char *name, TestFunc func) {
     if (test_name_len > largest_test_name) {
         largest_test_name = test_name_len;
     }
-    // in order linked list
     Test t = {
         .func = func,
         .name = name,
     };
-    if (ret) { // new key; initialize value to NULL
+    if (ret) { // new key; initialize value to a new vec
         kh_value(test_suites, k) = test_vec_init();
     }
     TestsVec *tv = kh_value(test_suites, k);
@@ -91,7 +88,6 @@ void register_test(const char *suite, const char *name, TestFunc func) {
 void run_all_tests() {
     assert(test_suites);
     khint_t scount = kh_size(test_suites);
-    // get and print the date and time in the format Date: 2023-10-27 | Time: 14:30:00
     time_t t = time(NULL);
     struct tm timeinfo;
     struct tm *tm = gmtime_r(&t, &timeinfo);
@@ -147,8 +143,7 @@ void run_all_tests() {
                             skipped += 1;
                             break;
                         default:
-                            assert(false && "Unreachable");
-                            // unreachable();        // TODO: Uncomment me on CLANG 17
+                            unreachable();
                         };
                     } else if (WIFSIGNALED(status)) {
                         fprintf(stderr, " " MAGENTA "[CRASHED, ☠ ]" RESET "\n");
