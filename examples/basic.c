@@ -1,4 +1,4 @@
-#include "souffle.h"
+#include "../souffle.h"
 #include <signal.h>
 #include <stdint.h>
 #include <stdio.h>
