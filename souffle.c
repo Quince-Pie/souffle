@@ -1,12 +1,12 @@
 #include "souffle.h"
 #include <assert.h>
 #include <stdarg.h>
-#include "stdlib.h"
-
 #include <stddef.h>
 #include <sys/wait.h>
+#include <time.h>
 #include <unistd.h>
 #include "klib/khash.h"
+#include "stdlib.h"
 
 #define GREEN "\033[0;32m"
 #define RED "\033[0;31m"
@@ -91,8 +91,17 @@ void register_test(const char *suite, const char *name, TestFunc func) {
 void run_all_tests() {
     assert(test_suites);
     khint_t scount = kh_size(test_suites);
+    // get and print the date and time in the format Date: 2023-10-27 | Time: 14:30:00
+    time_t t = time(NULL);
+    struct tm timeinfo;
+    struct tm *tm = gmtime_r(&t, &timeinfo);
+    char date[11];
+    char time[9];
+    strftime(date, sizeof(date), "%Y-%m-%d", tm);
+    strftime(time, sizeof(time), "%H:%M:%S", tm);
+
     fprintf(stderr, "=== Test Run Started ===\n");
-    fprintf(stderr, "Date: 2023-10-27 | Time: 14:30:00\n");
+    fprintf(stderr, "Date: %s | Time: %s UTC\n", date, time);
     fprintf(stderr, "--------------------------------------------------------\n\n");
     fprintf(stderr, "Running %zu tests in %d suites\n", tcount, scount);
     fprintf(stderr, "--------------------------------------------------------\n");

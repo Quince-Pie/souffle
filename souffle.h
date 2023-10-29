@@ -81,6 +81,19 @@ void err_print(const char *file, int lineno, const char *fmt, ...) PRINTF(3);
         }                                                                                          \
     })
 
+#define ASSERT_ARR_NE(arr1, arr2, size)                                                            \
+    ({                                                                                             \
+        static_assert(_Generic((arr1[0]), typeof(arr2[0]): 1, default: 0),                         \
+                      "Element type mismatch");                                                    \
+        for (typeof(size) i = 0; i < size; ++i) {                                                  \
+            if (((arr1)[i] == (arr2)[i])) {                                                        \
+                LOG_FAIL("Expected: \"%d\", got: \"%d\" in Idx: %d", a[i], b[i], i);               \
+                *status = Fail;                                                                    \
+                return;                                                                            \
+            }                                                                                      \
+        }                                                                                          \
+    })
+
 // -------------- ASSERTIONS END --------------
 
 typedef void (*TestFunc)(enum Status *status);

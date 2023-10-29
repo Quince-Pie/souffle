@@ -31,7 +31,7 @@ TEST(MySuite, pass_fail) {
 
 TEST(MySuite, pass_crash) {
     ASSERT_EQ(1, 1);
-    raise(SIGSEGV);
+    // raise(SIGSEGV);
 }
 
 TEST(EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE,
