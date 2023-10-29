@@ -11,12 +11,28 @@ TEST(MySuite, test_number_eq) {
   int b = 1;
   ASSERT_EQ(a, b);
 }
-TEST(MySuite, fffff) {
-  // ASSERT_EQ(12, 1);
-  raise(SIGSEGV);
-}
+// TEST(MySuite, fffff) {
+//   // ASSERT_EQ(12, 1);
+//   raise(SIGSEGV);
+// }
 
 TEST(MySuite, pass_me) {
   ASSERT_EQ(1, 1);
   ASSERT_EQ(2, 1);
+}
+
+TEST(MySuite, 1) {
+  ASSERT_EQ(1, 1);
+  ASSERT_EQ(2, 1);
+}
+TEST(MySuite, 2) {
+  ASSERT_EQ(1, 1);
+  ASSERT_EQ(2, 1);
+}
+TEST(MySuite, 3) {
+  ASSERT_EQ(1, 1);
+}
+
+TEST(fu, 3) {
+  raise(SIGSEGV);
 }
