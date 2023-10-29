@@ -14,14 +14,12 @@ enum Status {
 // Utility macro: Make sure the function is only used the same way as printf
 #define PRINTF(x) __attribute__((__format__(__printf__, (x), (x + 1))))
 
-void status_print(enum Status status, const char *file, int lineno, const char *fmt, ...) PRINTF(4);
+void err_print(const char *file, int lineno, const char *fmt, ...) PRINTF(3);
 
 
 #define LOG_FAIL(fmt, ...)                                \
-  status_print(Fail,__FILE__, __LINE__, fmt, ##__VA_ARGS__)
+  err_print(__FILE__, __LINE__, fmt, ##__VA_ARGS__)
 
-#define LOG_SUCCESS()                           \
-  status_print(Success,__FILE__, __LINE__, NULL)
 // ---------------- ASSERTIONS ---------------- 
 
 #define ASSERT_TRUE(cond) ({                                \

@@ -47,38 +47,18 @@ static void test_vec_push(TestsVec* tv, Test t) {
   return;
 }
 
-void status_print(enum Status status, const char *file, int lineno,
+void err_print(const char *file, int lineno,
                   const char *fmt, ...) {
 
   // Initialize the variable argument list
   va_list args;
   va_start(args, fmt);
-  const char *ret_str;
-  switch (status) {
-  // NOP, pass is handled in the test runner since we want to know that every
-  // assertion was correct
-  case Success:
-    ret_str = "PASSED";
-    break;
-  case Fail:
-    ret_str = "FAILED";
-    break;
-  case Skip:
-    ret_str = "SKIPPED";
-    break;
-  default:
-    unreachable();
-  };
-  // Print the log header
-
-  if (status == Fail) {
-    fprintf(stderr, " " RED "[%s, 0ms]" RESET " [%s:%d]\n", ret_str, file,
-            lineno);
-    // Print the log message
-    fprintf(stderr, "\t  > Details: ");
-    vfprintf(stderr, fmt, args);
-    fprintf(stderr, "\n\n");
-  }
+  fprintf(stderr, " " RED "[FAILED, 0ms]" RESET " [%s:%d]\n", file,
+          lineno);
+  // Print the log message
+  fprintf(stderr, "\t  > Details: ");
+  vfprintf(stderr, fmt, args);
+  fprintf(stderr, "\n\n");
 
   // Cleanup
   va_end(args);
@@ -160,10 +140,12 @@ void run_all_tests() {
               failed += 1;
               break;
             case Skip:
+              fprintf(stderr, " " YELLOW "[SKIPPED, 0ms]" RESET "\n");
               skipped += 1;
               break;
             default:
-              unreachable();
+              assert(false && "Unreachable");
+              // unreachable();        // TODO: Uncomment me on CLANG 17
             };
           } else if (WIFSIGNALED(status)) {
               fprintf(stderr, " " RED "[CRASHED, ☠ ]" RESET "\n");
