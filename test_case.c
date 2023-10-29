@@ -16,23 +16,32 @@ TEST(MySuite, fffff) {
   raise(SIGSEGV);
 }
 
-TEST(MySuite, pass_me) {
+TEST(MySuite, pass) {
+  ASSERT_EQ(1, 1);
+}
+
+TEST(MySuite, pass_fail_pass) {
+  ASSERT_EQ(1, 1);
+  ASSERT_EQ(2, 1);
+  ASSERT_EQ(1, 1);
+}
+
+TEST(MySuite, pass_fail) {
   ASSERT_EQ(1, 1);
   ASSERT_EQ(2, 1);
 }
 
-TEST(MySuite, 1) {
+TEST(MySuite, pass_crash) {
   ASSERT_EQ(1, 1);
-  ASSERT_EQ(2, 1);
+  raise(SIGSEGV);
 }
-TEST(MySuite, 2) {
-  ASSERT_EQ(1, 1);
-  ASSERT_EQ(2, 1);
-}
-TEST(MySuite, 3) {
-  ASSERT_EQ(1, 1);
-}
+
 TEST(EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE, EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE) {
   ASSERT_EQ(1, 1);
 }
 
+TEST(arr, arr1) {
+  int a[3] = {1,2,3};
+  int b[3] = {1,2,3};
+  ASSERT_ARR_EQ(a, b, 3);
+}

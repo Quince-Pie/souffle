@@ -10,8 +10,10 @@
 
 #define GREEN "\033[0;32m"
 #define RED "\033[0;31m"
+#define MAGENTA "\033[35m"
 #define YELLOW "\033[0;33m"
 #define RESET "\033[0m"
+
 
 KHASH_MAP_INIT_STR(str_map, TestsVec*)
 khash_t(str_map) * test_suites;
@@ -112,7 +114,7 @@ void run_all_tests() {
     if (kh_exist(test_suites, k)) {
       const char *suite_name = kh_key(test_suites, k);
       TestsVec *tv = kh_val(test_suites, k);
-      fprintf(stderr, "\n:: Suite: %s ::\n", suite_name);
+      fprintf(stderr, "\n⣿ Suite: %s ⣿\n", suite_name);
       for (size_t idx = 0; idx < tv->len; ++idx){
         pid_t pid = fork();
         if (pid == 0) {
@@ -148,7 +150,7 @@ void run_all_tests() {
               // unreachable();        // TODO: Uncomment me on CLANG 17
             };
           } else if (WIFSIGNALED(status)) {
-              fprintf(stderr, " " RED "[CRASHED, ☠ ]" RESET "\n");
+              fprintf(stderr, " " MAGENTA "[CRASHED, ☠ ]" RESET "\n");
               crashed += 1;
           }
         }
@@ -163,7 +165,7 @@ void run_all_tests() {
   fprintf(stderr, "=== Test Run Summary ===\n");
   fprintf(stderr,
           "Total Tests: %zu | " GREEN "Passed" RESET ": %d | " RED
-          "Failed" RESET ": %d | " RED "Crashed" RESET ": %d | " YELLOW
+          "Failed" RESET ": %d | " MAGENTA "Crashed" RESET ": %d | " YELLOW
           "Skipped" RESET ": "
           "%d\n",
           tcount, passed, failed, crashed, skipped);

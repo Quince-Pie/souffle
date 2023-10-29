@@ -26,8 +26,8 @@ void err_print(const char *file, int lineno, const char *fmt, ...) PRINTF(3);
     if (!cond) {                                            \
         LOG_FAIL("Expected: \"true\", got: \"%s\"", #cond); \
         *status = Fail;                                     \
+        return;                                             \
     }                                                       \
-    return;                                                 \
 })
 
 #define ASSERT_EQ(a, b) ({                                                   \
@@ -35,8 +35,8 @@ void err_print(const char *file, int lineno, const char *fmt, ...) PRINTF(3);
     if (a != b) {                                                            \
         LOG_FAIL("Expected: \"%d\", got: \"%d\"", a, b);                     \
         *status = Fail;                                                      \
+        return;                                                              \
     }                                                                        \
-    return;                                                                  \
 })
 
 #define ASSERT_NE(a, b) ({                                                   \
@@ -44,8 +44,8 @@ void err_print(const char *file, int lineno, const char *fmt, ...) PRINTF(3);
     if (a == b) {                                                            \
         LOG_FAIL("Expected: \"%d\", got: \"%d\"", a, b);                     \
         *status = Fail;                                                      \
+        return;                                                              \
     }                                                                        \
-    return;                                                                  \
 })
 
 #define ASSERT_LT(a, b) ({                                                   \
@@ -53,8 +53,8 @@ void err_print(const char *file, int lineno, const char *fmt, ...) PRINTF(3);
     if (a >= b) {                                                            \
         LOG_FAIL("Expected: \"%d\", got: \"%d\"", a, b);                     \
         *status = Fail;                                                      \
+        return;                                                              \
     }                                                                        \
-    return;                                                                  \
 })
 
 #define ASSERT_GT(a, b) ({                                                   \
@@ -62,19 +62,20 @@ void err_print(const char *file, int lineno, const char *fmt, ...) PRINTF(3);
     if (a <= b) {                                                            \
         LOG_FAIL("Expected: \"%d\", got: \"%d\"", a, b);                     \
         *status = Fail;                                                      \
+        return;                                                              \
     }                                                                        \
-    return;                                                                  \
 })
 
-// #define ASSERT_ARR_EQ(arr1, arr2, size) ({                                                        \
-//     static_assert(_Generic((arr1[0]), typeof(arr2[0]): 1, default: 0), "Element type mismatch");  \
-//     for (size_t i = 0; i < size; ++i) {                                                           \
-//         if (((arr1)[i] != (arr2)[i])) {                                                           \
-//             fprintf(stderr, "Array assertion failed at index %zu: %s != %s\n", i, #arr1, #arr2);  \
-//             exit(EXIT_FAILURE);                                                                   \
-//         }                                                                                         \
-//     }                                                                                             \
-// })
+#define ASSERT_ARR_EQ(arr1, arr2, size) ({                                                        \
+    static_assert(_Generic((arr1[0]), typeof(arr2[0]): 1, default: 0), "Element type mismatch");  \
+    for (typeof(size) i = 0; i < size; ++i) {                                                     \
+        if (((arr1)[i] != (arr2)[i])) {                                                           \
+            LOG_FAIL("Expected: \"%d\", got: \"%d\" in Idx: %d", a[i], b[i], i);                  \
+            *status = Fail;                                                                       \
+            return;                                                                               \
+        }                                                                                         \
+    }                                                                                             \
+})
 
 // -------------- ASSERTIONS END --------------
 
