@@ -113,13 +113,13 @@ void run_all_tests() {
             TestsVec *tv = kh_val(test_suites, k);
             fprintf(stderr, "\n⣿ Suite: %s ⣿\n", suite_name);
             for (size_t idx = 0; idx < tv->len; ++idx) {
+                int padding = largest_test_name - strlen(tv->tests[idx].name);
+                fprintf(stderr, "  🧪 %s .........", tv->tests[idx].name);
+                for (int i = 0; i < padding; ++i) {
+                    fprintf(stderr, ".");
+                }
                 pid_t pid = fork();
                 if (pid == 0) {
-                    int padding = largest_test_name - strlen(tv->tests[idx].name);
-                    fprintf(stderr, "  🧪 %s .........", tv->tests[idx].name);
-                    for (int i = 0; i < padding; ++i) {
-                        fprintf(stderr, ".");
-                    }
                     // child process
                     enum Status tstatus = Success;
                     tv->tests[idx].func(&tstatus);
