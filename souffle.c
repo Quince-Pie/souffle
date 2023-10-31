@@ -2,6 +2,7 @@
 #include <assert.h>
 #include <stdarg.h>
 #include <stddef.h>
+#include <sys/ioctl.h>
 #include <sys/wait.h>
 #include <time.h>
 #include <unistd.h>
@@ -49,10 +50,11 @@ void err_print(const char *file, int lineno, const char *fmt, ...) {
 
     va_list args;
     va_start(args, fmt);
-    fprintf(stderr, " " RED "[FAILED, 0ms]" RESET " [%s:%d]\n", file, lineno);
+    fprintf(stderr, " " RED "[FAILED, 0ms]" RESET "\n");
     // Print the expected vs actual message
     fprintf(stderr, "\t  > Details: ");
     vfprintf(stderr, fmt, args);
+    fprintf(stderr, " in [%s:%d]", file, lineno);
     fprintf(stderr, "\n\n");
 
     // Cleanup
@@ -86,6 +88,13 @@ void register_test(const char *suite, const char *name, TestFunc func) {
 }
 
 void run_all_tests() {
+    struct winsize w;
+    if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) == -1) {
+        w.ws_col = 80;
+    }
+    int cols = w.ws_col;
+    int max_cols = largest_test_name > cols - 31 ? cols - 31 : largest_test_name;
+
     assert(test_suites);
     khint_t scount = kh_size(test_suites);
     time_t t = time(NULL);
@@ -98,9 +107,9 @@ void run_all_tests() {
 
     fprintf(stderr, "=== Test Run Started ===\n");
     fprintf(stderr, "Date: %s | Time: %s UTC\n", date, time);
-    fprintf(stderr, "--------------------------------------------------------\n\n");
+    fprintf(stderr, "-----------------------------------------------------------------\n\n");
     fprintf(stderr, "Running %zu tests in %d suites\n", tcount, scount);
-    fprintf(stderr, "--------------------------------------------------------\n");
+    fprintf(stderr, "-----------------------------------------------------------------\n");
 
     int passed = 0;
     int failed = 0;
@@ -111,10 +120,12 @@ void run_all_tests() {
         if (kh_exist(test_suites, k)) {
             const char *suite_name = kh_key(test_suites, k);
             TestsVec *tv = kh_val(test_suites, k);
-            fprintf(stderr, "\n⣿ Suite: %s ⣿\n", suite_name);
+            fprintf(stderr, "\n⣿ Suite: %.*s ⣿\n", max_cols, suite_name);
             for (size_t idx = 0; idx < tv->len; ++idx) {
-                int padding = largest_test_name - strlen(tv->tests[idx].name);
-                fprintf(stderr, "  🧪 %s .........", tv->tests[idx].name);
+
+                int padding = max_cols - strlen(tv->tests[idx].name);
+                fprintf(stderr, "  🧪 %.*s ........", max_cols, tv->tests[idx].name);
+
                 for (int i = 0; i < padding; ++i) {
                     fprintf(stderr, ".");
                 }
@@ -156,14 +167,14 @@ void run_all_tests() {
     }
 
     kh_destroy(str_map, test_suites);
-    fprintf(stderr, "\n--------------------------------------------------------\n");
+    fprintf(stderr, "\n-----------------------------------------------------------------\n");
     fprintf(stderr, "=== Test Run Summary ===\n");
     fprintf(stderr,
             "Total Tests: %zu | " GREEN "Passed" RESET ": %d | " RED "Failed" RESET
             ": %d | " MAGENTA "Crashed" RESET ": %d | " YELLOW "Skipped" RESET ": "
             "%d\n",
             tcount, passed, failed, crashed, skipped);
-    fprintf(stderr, "--------------------------------------------------------\n");
+    fprintf(stderr, "-----------------------------------------------------------------\n");
 }
 
 __attribute__((weak)) int main(void) {
