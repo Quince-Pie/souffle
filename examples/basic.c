@@ -2,6 +2,8 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
+// The only needed header here.
 #include "../souffle.h"
 
 TEST(MySuite, TestCase1) { ASSERT_TRUE(false); }
@@ -34,8 +36,14 @@ TEST(MySuite, pass_crash) {
     // raise(SIGSEGV);
 }
 
-TEST(EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE,
-     EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE) {
+TEST(MySuite, skip_me) {
+    SKIP_TEST();
+    ASSERT_EQ(1, 1);
+}
+
+TEST(
+    EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE,
+    EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE) {
     ASSERT_EQ(1, 1);
 }
 
@@ -43,4 +51,11 @@ TEST(arr, arr1) {
     int a[3] = {1, 2, 3};
     int b[3] = {1, 2, 3};
     ASSERT_ARR_EQ(a, b, 3);
+}
+
+TEST(MySuite, timeout) {
+    for (size_t i = 0; i < 10000000000; i++) {
+        sleep(1);
+        ASSERT_EQ(i, i);
+    }
 }

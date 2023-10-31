@@ -8,6 +8,7 @@ enum Status {
     Success,
     Fail,
     Skip,
+    Timeout,
 };
 
 // Utility macro: Make sure the function is only used the same way as printf
@@ -16,6 +17,12 @@ enum Status {
 void err_print(const char *file, int lineno, const char *fmt, ...) PRINTF(3);
 
 #define LOG_FAIL(fmt, ...) err_print(__FILE__, __LINE__, fmt, ##__VA_ARGS__)
+
+#define SKIP_TEST()                                                                                \
+    ({                                                                                             \
+        *status = Skip;                                                                            \
+        return;                                                                                    \
+    })
 
 // ---------------- ASSERTIONS ----------------
 
@@ -32,7 +39,7 @@ void err_print(const char *file, int lineno, const char *fmt, ...) PRINTF(3);
     ({                                                                                             \
         static_assert(_Generic((a), typeof(b): 1, default: 0), "Type mismatch");                   \
         if (a != b) {                                                                              \
-            LOG_FAIL("Expected: \"%d\", got: \"%d\"", a, b);                                       \
+            LOG_FAIL("Expected: \"%zu\", got: \"%zu\"", (size_t)a, (size_t)b);                     \
             *status = Fail;                                                                        \
             return;                                                                                \
         }                                                                                          \

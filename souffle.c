@@ -1,5 +1,7 @@
+#define _POSIX_C_SOURCE 200809L
 #include "souffle.h"
 #include <assert.h>
+#include <signal.h>
 #include <stdarg.h>
 #include <stddef.h>
 #include <sys/ioctl.h>
@@ -13,6 +15,7 @@
 #define RED "\033[0;31m"
 #define MAGENTA "\033[35m"
 #define YELLOW "\033[0;33m"
+#define GREY "\033[90m"
 #define RESET "\033[0m"
 
 KHASH_MAP_INIT_STR(str_map, TestsVec *)
@@ -87,6 +90,19 @@ void register_test(const char *suite, const char *name, TestFunc func) {
     tcount += 1;
 }
 
+void timeout_handler(int signo) {
+    (void)signo;
+    exit(Timeout);
+}
+
+void alarm_setup() {
+    struct sigaction sa;
+    sa.sa_handler = timeout_handler;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = 0;
+    sigaction(SIGALRM, &sa, NULL);
+}
+
 void run_all_tests() {
     struct winsize w;
     if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) == -1) {
@@ -132,6 +148,8 @@ void run_all_tests() {
                 pid_t pid = fork();
                 if (pid == 0) {
                     // child process
+                    alarm_setup();
+                    alarm(20);
                     enum Status tstatus = Success;
                     tv->tests[idx].func(&tstatus);
                     exit(tstatus);
@@ -151,6 +169,10 @@ void run_all_tests() {
                             break;
                         case Skip:
                             fprintf(stderr, " " YELLOW "[SKIPPED, 0ms]" RESET "\n");
+                            skipped += 1;
+                            break;
+                        case Timeout:
+                            fprintf(stderr, " " GREY "[TIMEOUT, ⧖ ]" RESET "\n");
                             skipped += 1;
                             break;
                         default:
