@@ -123,14 +123,17 @@ void run_all_tests() {
 
     fprintf(stderr, "=== Test Run Started ===\n");
     fprintf(stderr, "Date: %s | Time: %s UTC\n", date, time);
-    fprintf(stderr, "-----------------------------------------------------------------\n\n");
+    fprintf(stderr,
+            "-------------------------------------------------------------------------------\n\n");
     fprintf(stderr, "Running %zu tests in %d suites\n", tcount, scount);
-    fprintf(stderr, "-----------------------------------------------------------------\n");
+    fprintf(stderr,
+            "-------------------------------------------------------------------------------\n");
 
     int passed = 0;
     int failed = 0;
     int crashed = 0;
     int skipped = 0;
+    int timeout = 0;
     khiter_t k;
     for (k = kh_begin(test_suites); k != kh_end(test_suites); ++k) {
         if (kh_exist(test_suites, k)) {
@@ -168,12 +171,12 @@ void run_all_tests() {
                             failed += 1;
                             break;
                         case Skip:
-                            fprintf(stderr, " " YELLOW "[SKIPPED, 0ms]" RESET "\n");
+                            fprintf(stderr, " " YELLOW "[SKIPPED, ⏭ ]" RESET "\n");
                             skipped += 1;
                             break;
                         case Timeout:
                             fprintf(stderr, " " GREY "[TIMEOUT, ⧖ ]" RESET "\n");
-                            skipped += 1;
+                            timeout += 1;
                             break;
                         default:
                             unreachable();
@@ -189,14 +192,16 @@ void run_all_tests() {
     }
 
     kh_destroy(str_map, test_suites);
-    fprintf(stderr, "\n-----------------------------------------------------------------\n");
+    fprintf(stderr,
+            "\n-------------------------------------------------------------------------------\n");
     fprintf(stderr, "=== Test Run Summary ===\n");
     fprintf(stderr,
             "Total Tests: %zu | " GREEN "Passed" RESET ": %d | " RED "Failed" RESET
-            ": %d | " MAGENTA "Crashed" RESET ": %d | " YELLOW "Skipped" RESET ": "
-            "%d\n",
-            tcount, passed, failed, crashed, skipped);
-    fprintf(stderr, "-----------------------------------------------------------------\n");
+            ": %d | " MAGENTA "Crashed" RESET ": %d | " YELLOW "Skipped" RESET ": %d | " GREY
+            "Timeout" RESET ": %d\n",
+            tcount, passed, failed, crashed, skipped, timeout);
+    fprintf(stderr,
+            "-------------------------------------------------------------------------------\n");
 }
 
 __attribute__((weak)) int main(void) {

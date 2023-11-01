@@ -24,6 +24,9 @@ void err_print(const char *file, int lineno, const char *fmt, ...) PRINTF(3);
         return;                                                                                    \
     })
 
+#define ISUNSIGNED(x) ((typeof(x))0 - 1 > 0)
+
+#define ISFLOAT(x) _Generic((x), float: true, double: true, long double: true, default: false)
 // ---------------- ASSERTIONS ----------------
 
 #define ASSERT_TRUE(cond)                                                                          \
@@ -39,7 +42,13 @@ void err_print(const char *file, int lineno, const char *fmt, ...) PRINTF(3);
     ({                                                                                             \
         static_assert(_Generic((a), typeof(b): 1, default: 0), "Type mismatch");                   \
         if (a != b) {                                                                              \
-            LOG_FAIL("Expected: \"%zu\", got: \"%zu\"", (size_t)a, (size_t)b);                     \
+            if (ISFLOAT(a)) {                                                                      \
+                LOG_FAIL("Expected: \"%Lf\", got: \"%Lf\"", (long double)a, (long double)b);       \
+            } else if (ISUNSIGNED(a)) {                                                            \
+                LOG_FAIL("Expected: \"%zu\", got: \"%zu\"", (size_t)a, (size_t)b);                 \
+            } else {                                                                               \
+                LOG_FAIL("Expected: \"%zd\", got: \"%zd\"", (ssize_t)a, (ssize_t)b);               \
+            }                                                                                      \
             *status = Fail;                                                                        \
             return;                                                                                \
         }                                                                                          \
@@ -49,7 +58,13 @@ void err_print(const char *file, int lineno, const char *fmt, ...) PRINTF(3);
     ({                                                                                             \
         static_assert(_Generic((a), typeof(b): 1, default: 0), "Type mismatch");                   \
         if (a == b) {                                                                              \
-            LOG_FAIL("Expected: \"%d\", got: \"%d\"", a, b);                                       \
+            if (ISFLOAT(a)) {                                                                      \
+                LOG_FAIL("Expected: \"%Lf\", got: \"%Lf\"", (long double)a, (long double)b);       \
+            } else if (ISUNSIGNED(a)) {                                                            \
+                LOG_FAIL("Expected: \"%zu\", got: \"%zu\"", (size_t)a, (size_t)b);                 \
+            } else {                                                                               \
+                LOG_FAIL("Expected: \"%zd\", got: \"%zd\"", (ssize_t)a, (ssize_t)b);               \
+            }                                                                                      \
             *status = Fail;                                                                        \
             return;                                                                                \
         }                                                                                          \
@@ -59,7 +74,13 @@ void err_print(const char *file, int lineno, const char *fmt, ...) PRINTF(3);
     ({                                                                                             \
         static_assert(_Generic((a), typeof(b): 1, default: 0), "Type mismatch");                   \
         if (a >= b) {                                                                              \
-            LOG_FAIL("Expected: \"%d\", got: \"%d\"", a, b);                                       \
+            if (ISFLOAT(a)) {                                                                      \
+                LOG_FAIL("Expected: \"%Lf\", got: \"%Lf\"", (long double)a, (long double)b);       \
+            } else if (ISUNSIGNED(a)) {                                                            \
+                LOG_FAIL("Expected: \"%zu\", got: \"%zu\"", (size_t)a, (size_t)b);                 \
+            } else {                                                                               \
+                LOG_FAIL("Expected: \"%zd\", got: \"%zd\"", (ssize_t)a, (ssize_t)b);               \
+            }                                                                                      \
             *status = Fail;                                                                        \
             return;                                                                                \
         }                                                                                          \
@@ -69,7 +90,13 @@ void err_print(const char *file, int lineno, const char *fmt, ...) PRINTF(3);
     ({                                                                                             \
         static_assert(_Generic((a), typeof(b): 1, default: 0), "Type mismatch");                   \
         if (a <= b) {                                                                              \
-            LOG_FAIL("Expected: \"%d\", got: \"%d\"", a, b);                                       \
+            if (ISFLOAT(a)) {                                                                      \
+                LOG_FAIL("Expected: \"%Lf\", got: \"%Lf\"", (long double)a, (long double)b);       \
+            } else if (ISUNSIGNED(a)) {                                                            \
+                LOG_FAIL("Expected: \"%zu\", got: \"%zu\"", (size_t)a, (size_t)b);                 \
+            } else {                                                                               \
+                LOG_FAIL("Expected: \"%zd\", got: \"%zd\"", (ssize_t)a, (ssize_t)b);               \
+            }                                                                                      \
             *status = Fail;                                                                        \
             return;                                                                                \
         }                                                                                          \

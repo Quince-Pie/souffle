@@ -26,6 +26,10 @@ TEST(MySuite, pass_fail_pass) {
     ASSERT_EQ(1, 1);
 }
 
+TEST(MySuite, float_check) {
+    ASSERT_EQ(1.5, 2.5);
+}
+
 TEST(MySuite, pass_fail) {
     ASSERT_EQ(1, 1);
     ASSERT_EQ(2, 1);
