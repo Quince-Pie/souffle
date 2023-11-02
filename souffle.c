@@ -1,4 +1,6 @@
-#define _POSIX_C_SOURCE 200809L
+// #define _POSIX_C_SOURCE 200809L
+#define _XOPEN_SOURCE 700
+#define _GNU_SOURCE
 #include "souffle.h"
 #include <assert.h>
 #include <signal.h>
@@ -57,7 +59,7 @@ void string_append(String *str, const char *fmt, ...) {
 
     va_start(args, fmt);
     if (size_needed + 1 > str->capacity - str->len) {
-        char* new_buf = realloc(str->buf, (size_t)(str->capacity * 2) * sizeof(char));
+        char *new_buf = realloc(str->buf, (size_t)(str->capacity * 2) * sizeof(char));
         if (!new_buf) {
             perror("Re-allocation failed");
             free(str->buf);
@@ -211,7 +213,8 @@ void run_all_tests() {
                 }
                 struct timespec start, end;
                 timespec_get(&start, TIME_UTC);
-                pid_t pid = fork();
+                // use vfork to avoid copying memory
+                pid_t pid = vfork();
                 if (pid == 0) {
                     // child process
                     close(pipefd[0]);
