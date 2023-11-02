@@ -154,8 +154,6 @@ typedef struct TestsVec {
 void register_test(const char *suite, const char *name, TestFunc func);
 void run_all_tests();
 
-// if not windows or MINGW
-#ifndef _WIN32
 #define TEST(suite, name)                                                                          \
     void suite##_##name(StatusInfo *status_info);                                                  \
     __attribute__((constructor)) void reg_##suite##_##name() {                                     \
@@ -163,14 +161,4 @@ void run_all_tests();
     }                                                                                              \
     void suite##_##name(StatusInfo *status_info)
 
-#else
-
-#define TEST(suite, name)                                                                          \
-    void suite##_##name(StatusInfo *status_info);                                                  \
-    void reg_##suite##_##name() { register_test(#suite, #name, suite##_##name); }                  \
-    __pragma(section(".CRT$XCU", read)) __declspec(allocate(".CRT$XCU")) void (                    \
-        *p##suite##_##name)() = reg_##suite##_##name;                                              \
-    void suite##_##name(StatusInfo *status_info)
-
-#endif
 #endif // SOUFFLE_H

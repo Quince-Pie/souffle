@@ -1,4 +1,3 @@
-// if not Windows or MinGW
 #ifndef _WIN32
 #define _XOPEN_SOURCE 700
 #define _GNU_SOURCE
@@ -403,15 +402,11 @@ void run_all_tests_win() {
 }
 #endif
 
-// if not windows or mingw
-#ifndef _WIN32
 __attribute__((weak)) int main(void) {
+#ifndef _WIN32
     run_all_tests();
-    return 0;
-}
 #else
-int main(void) {
     run_all_tests_win();
+#endif
     return 0;
 }
-#endif

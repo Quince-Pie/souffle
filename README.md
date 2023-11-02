@@ -18,18 +18,19 @@ Souffle aims to be simple and easy to use while offering as much helpful feature
 ### What to Expect From Souffle
 
 1. Simple test declaration (No main function is needed).
-2. Reasonably fast.
-3. Type checking assertions.
+2. No setjmps / longjmps (vfork is utilized instead).
+3. Reasonably fast.
+4. Type checking assertions.
   - All assert functions check for type mismatch at compile time.
-4. Easy to integrate with your project (with and without build system).
-5. Works across modern compilers and systems.
+5. Easy to integrate with your project (with and without build system).
+6. Works across modern compilers and systems.
 
 
 ### Build from Source
 
 #### Requirements:
 
-- A modern C compiler such as GCC and Clang (Souffle currently targets C23).
+- A modern C compiler such as GCC and Clang (Souffle currently targets C23 but clang-cl is also supported).
 - khash provided by klib (available in git submodule) for test registeration.
 
 
@@ -42,6 +43,5 @@ To build Souffle, simply create your test file and add souffle.c next to it when
 
 ### WIP
 
-- Add support for MSVC.
 - Add more macro assertions to simplify testing.
 - Implement setup and teardown phase.
