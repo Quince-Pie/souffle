@@ -56,9 +56,14 @@ void string_append(String *str, const char *fmt, ...) {
     va_end(args);
 
     va_start(args, fmt);
-    if (size_needed > str->capacity - str->len) {
-        str->buf = realloc(str->buf, (size_t)(str->capacity * 2) * sizeof(char));
-        assert(str->buf);
+    if (size_needed + 1 > str->capacity - str->len) {
+        char* new_buf = realloc(str->buf, (size_t)(str->capacity * 2) * sizeof(char));
+        if (!new_buf) {
+            perror("Re-allocation failed");
+            free(str->buf);
+            exit(EXIT_FAILURE);
+        }
+        str->buf = new_buf;
         str->capacity *= 2;
     }
     str->len += vsnprintf(str->buf + str->len, str->capacity, fmt, args);
