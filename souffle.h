@@ -1,6 +1,7 @@
 #ifndef SOUFFLE_H
 #define SOUFFLE_H
 
+#include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -26,10 +27,10 @@ void err_print(StatusInfo *status_info, const char *file, int lineno, const char
 #define LOG_FAIL(fmt, ...) err_print(status_info, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
 
 #define SKIP_TEST()                                                                                \
-    ({                                                                                             \
+    do {                                                                                           \
         status_info->status = Skip;                                                                \
         return;                                                                                    \
-    })
+    } while (0)
 
 #define ISUNSIGNED(x) ((typeof(x))0 - 1 > 0)
 
@@ -37,16 +38,16 @@ void err_print(StatusInfo *status_info, const char *file, int lineno, const char
 // ---------------- ASSERTIONS ----------------
 
 #define ASSERT_TRUE(cond)                                                                          \
-    ({                                                                                             \
+    do {                                                                                           \
         if (!cond) {                                                                               \
             status_info->status = Fail;                                                            \
             LOG_FAIL("Expected: \"true\", got: \"%s\"", #cond);                                    \
             return;                                                                                \
         }                                                                                          \
-    })
+    } while (0)
 
 #define ASSERT_EQ(a, b)                                                                            \
-    ({                                                                                             \
+    do {                                                                                           \
         static_assert(_Generic((a), typeof(b): 1, default: 0), "Type mismatch");                   \
         if (a != b) {                                                                              \
             status_info->status = Fail;                                                            \
@@ -59,10 +60,10 @@ void err_print(StatusInfo *status_info, const char *file, int lineno, const char
             }                                                                                      \
             return;                                                                                \
         }                                                                                          \
-    })
+    } while (0)
 
 #define ASSERT_NE(a, b)                                                                            \
-    ({                                                                                             \
+    do {                                                                                           \
         static_assert(_Generic((a), typeof(b): 1, default: 0), "Type mismatch");                   \
         if (a == b) {                                                                              \
             status_info->status = Fail;                                                            \
@@ -75,10 +76,10 @@ void err_print(StatusInfo *status_info, const char *file, int lineno, const char
             }                                                                                      \
             return;                                                                                \
         }                                                                                          \
-    })
+    } while (0)
 
 #define ASSERT_LT(a, b)                                                                            \
-    ({                                                                                             \
+    do {                                                                                           \
         static_assert(_Generic((a), typeof(b): 1, default: 0), "Type mismatch");                   \
         if (a >= b) {                                                                              \
             status_info->status = Fail;                                                            \
@@ -91,10 +92,10 @@ void err_print(StatusInfo *status_info, const char *file, int lineno, const char
             }                                                                                      \
             return;                                                                                \
         }                                                                                          \
-    })
+    } while (0)
 
 #define ASSERT_GT(a, b)                                                                            \
-    ({                                                                                             \
+    do {                                                                                           \
         static_assert(_Generic((a), typeof(b): 1, default: 0), "Type mismatch");                   \
         if (a <= b) {                                                                              \
             status_info->status = Fail;                                                            \
@@ -107,10 +108,10 @@ void err_print(StatusInfo *status_info, const char *file, int lineno, const char
             }                                                                                      \
             return;                                                                                \
         }                                                                                          \
-    })
+    } while (0)
 
 #define ASSERT_ARR_EQ(arr1, arr2, size)                                                            \
-    ({                                                                                             \
+    do {                                                                                           \
         static_assert(_Generic((arr1[0]), typeof(arr2[0]): 1, default: 0),                         \
                       "Element type mismatch");                                                    \
         for (typeof(size) i = 0; i < size; ++i) {                                                  \
@@ -120,10 +121,10 @@ void err_print(StatusInfo *status_info, const char *file, int lineno, const char
                 return;                                                                            \
             }                                                                                      \
         }                                                                                          \
-    })
+    } while (0)
 
 #define ASSERT_ARR_NE(arr1, arr2, size)                                                            \
-    ({                                                                                             \
+    do {                                                                                           \
         static_assert(_Generic((arr1[0]), typeof(arr2[0]): 1, default: 0),                         \
                       "Element type mismatch");                                                    \
         for (typeof(size) i = 0; i < size; ++i) {                                                  \
@@ -133,7 +134,7 @@ void err_print(StatusInfo *status_info, const char *file, int lineno, const char
                 return;                                                                            \
             }                                                                                      \
         }                                                                                          \
-    })
+    } while (0)
 
 // -------------- ASSERTIONS END --------------
 
@@ -153,6 +154,8 @@ typedef struct TestsVec {
 void register_test(const char *suite, const char *name, TestFunc func);
 void run_all_tests();
 
+// if not windows or MINGW
+#ifndef _WIN32
 #define TEST(suite, name)                                                                          \
     void suite##_##name(StatusInfo *status_info);                                                  \
     __attribute__((constructor)) void reg_##suite##_##name() {                                     \
@@ -160,4 +163,14 @@ void run_all_tests();
     }                                                                                              \
     void suite##_##name(StatusInfo *status_info)
 
+#else
+
+#define TEST(suite, name)                                                                          \
+    void suite##_##name(StatusInfo *status_info);                                                  \
+    void reg_##suite##_##name() { register_test(#suite, #name, suite##_##name); }                  \
+    __pragma(section(".CRT$XCU", read)) __declspec(allocate(".CRT$XCU")) void (                    \
+        *p##suite##_##name)() = reg_##suite##_##name;                                              \
+    void suite##_##name(StatusInfo *status_info)
+
+#endif
 #endif // SOUFFLE_H

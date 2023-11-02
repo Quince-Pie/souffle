@@ -1,18 +1,24 @@
-// #define _POSIX_C_SOURCE 200809L
+// if not Windows or MinGW
+#ifndef _WIN32
 #define _XOPEN_SOURCE 700
 #define _GNU_SOURCE
-#include "souffle.h"
-#include <assert.h>
 #include <signal.h>
-#include <stdarg.h>
-#include <stdatomic.h>
-#include <stddef.h>
 #include <sys/ioctl.h>
 #include <sys/wait.h>
 #include <threads.h>
-#include <time.h>
 #include <unistd.h>
+#else
+#include <windows.h>
+#define TRY __try
+#define EXCEPT __except (EXCEPTION_EXECUTE_HANDLER)
+#endif // _WIN32
+
+#include <stdarg.h>
+#include <stdatomic.h>
+#include <stddef.h>
+#include <time.h>
 #include "klib/khash.h"
+#include "souffle.h"
 #include "stdlib.h"
 
 #define GREEN "\033[0;32m"
@@ -145,6 +151,7 @@ void register_test(const char *suite, const char *name, TestFunc func) {
     tcount += 1;
 }
 
+#ifndef _WIN32
 void timeout_handler(int signo) {
     (void)signo;
     exit(Timeout);
@@ -294,183 +301,90 @@ void run_all_tests() {
     fprintf(stderr, "%s", output->buf);
     string_free(output);
 }
-
-typedef struct TestThread {
-    TestsVec *tv;
-    int start;
-    int end;
-    atomic_int *passed;
-    atomic_int *failed;
-    atomic_int *crashed;
-    atomic_int *skipped;
-    atomic_int *timeout;
-    int max_cols;
-} TestThread;
-
-// thread function
-int thread_func(void *data) {
-
-    TestThread *tt = (TestThread *)data;
-    int max_cols = tt->max_cols;
-    TestsVec *tv = tt->tv;
-    int start = tt->start;
-    int end = tt->end;
-    String *output = string_init();
-
-    for (size_t idx = start; idx < end; ++idx) {
-        int padding = max_cols - strlen(tv->tests[idx].name);
-        string_append(output, "  🧪 %.*s ........", max_cols, tv->tests[idx].name);
-
-        for (int i = 0; i < padding; ++i) {
-            string_append(output, ".");
-        }
-        // setup pipes for transmitting fail info.
-        int pipefd[2];
-        if (pipe(pipefd) == -1) {
-            perror("Pipe failed");
-            exit(EXIT_FAILURE);
-        }
-        struct timespec start, end;
-        timespec_get(&start, TIME_UTC);
-        pid_t pid = fork();
-        if (pid == 0) {
-            // child process
-            close(pipefd[0]);
-            alarm_setup();
-            StatusInfo tstatus = {
-                .status = Success,
-                .fail_msg = {0},
-            };
-            alarm(20);
-            tv->tests[idx].func(&tstatus);
-            int wret = write(pipefd[1], tstatus.fail_msg, 128);
-            if (wret == -1) {
-                perror("Failed to write to pipe");
-            }
-            close(pipefd[1]);
-            exit(tstatus.status);
-        } else {
-            close(pipefd[1]);
-            // parent process
-            int status;
-            waitpid(pid, &status, 0);
-            timespec_get(&end, TIME_UTC);
-            long elapsed_ms =
-                (end.tv_sec - start.tv_sec) * 1000 + (end.tv_nsec - start.tv_nsec) / 1000000;
-            char buf[128] = {0};
-            int rret = read(pipefd[0], buf, 128);
-            if (rret == -1) {
-                perror("Failed to read to pipe");
-            }
-            close(pipefd[0]);
-            if (WIFEXITED(status)) {
-                switch ((enum Status)WEXITSTATUS(status)) {
-                case Success:
-                    string_append(output, " " GREEN "[PASSED, %ldms]" RESET "\n", elapsed_ms);
-                    atomic_fetch_add_explicit(tt->passed, 1, memory_order_relaxed);
-                    break;
-                case Fail:
-                    string_append(output, " " RED "[FAILED, %ldms]" RESET "\n\t  > Details: %s\n\n",
-                                  elapsed_ms, buf);
-                    atomic_fetch_add_explicit(tt->failed, 1, memory_order_relaxed);
-                    break;
-                case Skip:
-                    string_append(output, " " YELLOW "[SKIPPED, ⏭ ]" RESET "\n");
-                    atomic_fetch_add_explicit(tt->skipped, 1, memory_order_relaxed);
-                    break;
-                case Timeout:
-                    string_append(output, " " GREY "[TIMEOUT, ⧖ ]" RESET "\n");
-                    atomic_fetch_add_explicit(tt->timeout, 1, memory_order_relaxed);
-                    break;
-                default:
-                    unreachable();
-                };
-            } else if (WIFSIGNALED(status)) {
-                string_append(output, " " MAGENTA "[CRASHED, ☠ ]" RESET "\n");
-                atomic_fetch_add_explicit(tt->crashed, 1, memory_order_relaxed);
-            }
-            fprintf(stderr, "%s", output->buf);
-            fflush(stderr);
-            string_rewind(output);
-        }
-    }
-    string_free(output);
-    return 0;
-}
-
-// number of threads from env var
-static int NUM_THREADS = 1;
-void run_all_tests_threaded() {
-    // Setup Printing End Column
-    struct winsize w;
-    if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) == -1) {
-        w.ws_col = 80;
-    }
-    int cols = w.ws_col;
+#else
+// Windows
+void run_all_tests_win() {
+    // Setup Printing End Column. Since we don't have ioctl in windows we need to use windows.h
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
+    int cols = csbi.srWindow.Right - csbi.srWindow.Left + 1;
     int max_cols = largest_test_name > cols - 31 ? cols - 31 : largest_test_name;
-    int max_suite_cols = largest_suite_name > cols - 31 ? cols - 31 : largest_suite_name;
 
     String *output = string_init();
 
     assert(test_suites);
     // Result Header
     khint_t scount = kh_size(test_suites);
-    time_t t = time(NULL);
-    struct tm timeinfo;
-    struct tm *tm = gmtime_r(&t, &timeinfo);
-    char date[11];
-    char time[9];
-    strftime(date, sizeof(date), "%Y-%m-%d", tm);
-    strftime(time, sizeof(time), "%H:%M:%S", tm);
 
     string_append(output, "=== Test Run Started ===\n");
-    string_append(output, "Date: %s | Time: %s UTC\n", date, time);
     string_append(output, "%s\n\n", DASHES);
     string_append(output, "Running %zu tests in %d suites\n", tcount, scount);
     string_append(output, "%s\n", DASHES);
 
-    atomic_int passed = 0;
-    atomic_int failed = 0;
-    atomic_int crashed = 0;
-    atomic_int skipped = 0;
-    atomic_int timeout = 0;
+    int passed = 0;
+    int failed = 0;
+    int crashed = 0;
+    int skipped = 0;
+    int timeout = 0;
     khiter_t k;
     for (k = kh_begin(test_suites); k != kh_end(test_suites); ++k) {
         if (kh_exist(test_suites, k)) {
             const char *suite_name = kh_key(test_suites, k);
             TestsVec *tv = kh_val(test_suites, k);
-            string_append(output, "\n⣿ Suite: %.*s ⣿\n", max_suite_cols, suite_name);
-            printf("%s", output->buf);
-            fflush(stdout);
-            string_rewind(output);
-            // tests per thread
-            int tpt = tv->len / NUM_THREADS;
-            int rem = tv->len % NUM_THREADS;
-            // each thread gets its range from the thread_id * tpt to (thread_id + 1) * tpt
-            // the last thread gets the remainder as a bonus
-            thrd_t threads[NUM_THREADS];
-            TestThread tt[NUM_THREADS];
-            for (int i = 0; i < NUM_THREADS; ++i) {
-                tt[i] = (TestThread){
-                    .tv = tv,
-                    .start = i * tpt,
-                    .end = (i + 1) * tpt,
-                    .passed = &passed,
-                    .failed = &failed,
-                    .crashed = &crashed,
-                    .skipped = &skipped,
-                    .timeout = &timeout,
-                    .max_cols = max_cols,
-                };
-                if (i == NUM_THREADS - 1) {
-                    tt[i].end += rem;
-                }
-                thrd_create(&threads[i], thread_func, &tt[i]);
-            }
-            for (int i = 0; i < NUM_THREADS; ++i) {
-                thrd_join(threads[i], NULL);
-            }
+            string_append(output, "\n⣿ Suite: %.*s ⣿\n", max_cols, suite_name);
+            for (size_t idx = 0; idx < tv->len; ++idx) {
 
+                int padding = max_cols - strlen(tv->tests[idx].name);
+                string_append(output, "  🧪 %.*s ........", max_cols, tv->tests[idx].name);
+
+                for (int i = 0; i < padding; ++i) {
+                    string_append(output, ".");
+                }
+                struct timespec start, end;
+                timespec_get(&start, TIME_UTC);
+                // child process
+                StatusInfo tstatus = {
+                    .status = Success,
+                    .fail_msg = {0},
+                };
+                // alarm(20);
+                tv->tests[idx].func(&tstatus);
+                timespec_get(&end, TIME_UTC);
+                long elapsed_ms =
+                    (end.tv_sec - start.tv_sec) * 1000 + (end.tv_nsec - start.tv_nsec) / 1000000;
+
+                TRY {
+                    switch (tstatus.status) {
+                    case Success:
+                        string_append(output, " " GREEN "[PASSED, %ldms]" RESET "\n", elapsed_ms);
+                        passed += 1;
+                        break;
+                    case Fail:
+                        string_append(output,
+                                      " " RED "[FAILED, %ldms]" RESET "\n\t  > Details: %s\n\n",
+                                      elapsed_ms, tstatus.fail_msg);
+                        failed += 1;
+                        break;
+                    case Skip:
+                        string_append(output, " " YELLOW "[SKIPPED, ⏭ ]" RESET "\n");
+                        skipped += 1;
+                        break;
+                    case Timeout:
+                        string_append(output, " " GREY "[TIMEOUT, ⧖ ]" RESET "\n");
+                        timeout += 1;
+                        break;
+                    default:
+                        assert(0 && "Unreachable");
+                    };
+                }
+                EXCEPT {
+                    string_append(output, " " MAGENTA "[CRASHED, ☠ ]" RESET "\n");
+                    crashed += 1;
+                }
+                fprintf(stderr, "%s", output->buf);
+                fflush(stderr);
+                string_rewind(output);
+            }
             test_vec_free(tv);
         }
     }
@@ -487,13 +401,17 @@ void run_all_tests_threaded() {
     fprintf(stderr, "%s", output->buf);
     string_free(output);
 }
+#endif
 
+// if not windows or mingw
+#ifndef _WIN32
 __attribute__((weak)) int main(void) {
-    NUM_THREADS = getenv("SOUFFLE_THREADS") ? atoi(getenv("SOUFFLE_THREADS")) : 1;
-    if (NUM_THREADS > 1) {
-        run_all_tests_threaded();
-    } else {
-        run_all_tests();
-    }
+    run_all_tests();
     return 0;
 }
+#else
+int main(void) {
+    run_all_tests_win();
+    return 0;
+}
+#endif
