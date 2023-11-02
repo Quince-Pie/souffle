@@ -353,26 +353,31 @@ void run_all_tests_win() {
                 }
                 struct timespec start, end;
                 timespec_get(&start, TIME_UTC);
-                // child process
-                StatusInfo tstatus = {
-                    .status = Success,
-                    .fail_msg = {0},
-                };
-                // alarm(20);
-                tv->tests[idx].func(&tstatus);
-                timespec_get(&end, TIME_UTC);
-                long elapsed_ms =
-                    (end.tv_sec - start.tv_sec) * 1000 + (end.tv_nsec - start.tv_nsec) / 1000000;
-
                 TRY {
+                    StatusInfo tstatus = {
+                        .status = Success,
+                        .fail_msg = {0},
+                    };
+                    // alarm(20);
+                    void *ctx_internl = NULL;
+                    void **ctx = &ctx_internl;
+                    if (tv->tests[idx].setup) {
+                        tv->tests[idx].setup(ctx);
+                    }
+                    tv->tests[idx].func(&tstatus, ctx);
+                    if (tv->tests[idx].teardown) {
+                        tv->tests[idx].teardown(ctx);
+                    }
+                    timespec_get(&end, TIME_UTC);
+                    long elapsed_ms = (end.tv_sec - start.tv_sec) * 1000 +
+                                      (end.tv_nsec - start.tv_nsec) / 1000000;
                     switch (tstatus.status) {
                     case Success:
                         string_append(output, " " GREEN "[PASSED, %ldms]" RESET "\n", elapsed_ms);
                         passed += 1;
                         break;
                     case Fail:
-                        string_append(output,
-                                      " " RED "[FAILED, %ldms]" RESET "\n\t  > Details: %s\n\n",
+                        string_append(output, " " RED "[FAILED, %ldms]" RESET "\n\t  > %s\n\n",
                                       elapsed_ms, tstatus.fail_msg);
                         failed += 1;
                         break;

@@ -1,8 +1,11 @@
 #include <signal.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
+#ifndef _WIN32
 #include <unistd.h>
+#else
+#include <Windows.h>
+#include <stdbool.h>
+#endif
+
 // The only needed header here.
 #include "../souffle.h"
 SETUP(MySuite, TestCase1) {
@@ -26,8 +29,12 @@ TEST(MySuite, test_number_eq) {
     ASSERT_EQ(a, b);
 }
 TEST(MySuite, fffff) {
-    // ASSERT_EQ(12, 1);
+// ASSERT_EQ(12, 1);
+#ifndef _Win32
     raise(SIGSEGV);
+#else
+    RaiseException(EXCEPTION_ACCESS_VIOLATION, 0, 0, NULL);
+#endif
 }
 
 TEST(MySuite, pass) { ASSERT_EQ(1, 1); }
@@ -68,14 +75,22 @@ TEST(arr, arr1) {
 }
 TEST(MySuite, timeoutf) {
     for (size_t i = 0; i < 3; i++) {
+#ifndef _WIN32
         sleep(1);
+#else
+        Sleep(1000);
+#endif
         ASSERT_EQ(i, i);
     }
 }
 
 TEST(MySuite, timeout) {
     for (size_t i = 0; i < 10000000000; i++) {
+#ifndef _WIN32
         sleep(1);
+#else
+        Sleep(1000);
+#endif
         ASSERT_EQ(i, i);
     }
 }
