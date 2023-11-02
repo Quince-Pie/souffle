@@ -62,6 +62,24 @@ void err_print(StatusInfo *status_info, const char *file, int lineno, const char
         }                                                                                          \
     } while (0)
 
+#define ASSERT_NULL(a)                                                                             \
+    do {                                                                                           \
+        if (a != NULL) {                                                                           \
+            status_info->status = Fail;                                                            \
+            LOG_FAIL("Expected: \"NULL\", got: \"%p\"", a);                                        \
+            return;                                                                                \
+        }                                                                                          \
+    } while (0)
+
+#define ASSERT_NOT_NULL(a)                                                                         \
+    do {                                                                                           \
+        if (a == NULL) {                                                                           \
+            status_info->status = Fail;                                                            \
+            LOG_FAIL("Expected: \"not NULL\", got: \"%p\"", a);                                    \
+            return;                                                                                \
+        }                                                                                          \
+    } while (0)
+
 #define ASSERT_NE(a, b)                                                                            \
     do {                                                                                           \
         static_assert(_Generic((a), typeof(b): 1, default: 0), "Type mismatch");                   \
@@ -138,11 +156,17 @@ void err_print(StatusInfo *status_info, const char *file, int lineno, const char
 
 // -------------- ASSERTIONS END --------------
 
-typedef void (*TestFunc)(StatusInfo *status_info);
+typedef void (*TestFunc)(StatusInfo *status_info, void **ctx);
+
+typedef void (*SetupFunc)(void **ctx);
+
+typedef void (*TeardownFunc)(void **ctx);
 
 typedef struct Test {
     const char *name;
     TestFunc func;
+    SetupFunc setup;
+    TeardownFunc teardown;
 } Test;
 
 typedef struct TestsVec {
@@ -151,14 +175,27 @@ typedef struct TestsVec {
     size_t len;
 } TestsVec;
 
-void register_test(const char *suite, const char *name, TestFunc func);
+void register_test(const char *suite, const char *name, TestFunc func, SetupFunc setup,
+                   TeardownFunc teardown);
+
 void run_all_tests();
 
+#define SETUP(suite, name)                                                                         \
+    extern void suite##_##name##_setup(void **ctx) __attribute__((weak));                          \
+    void suite##_##name##_setup(void **ctx)
+
+#define TEARDOWN(suite, name)                                                                      \
+    extern void suite##_##name##_teardown(void **ctx) __attribute__((weak));                       \
+    void suite##_##name##_teardown(void **ctx)
+
 #define TEST(suite, name)                                                                          \
-    void suite##_##name(StatusInfo *status_info);                                                  \
+    SETUP(suite, name);                                                                            \
+    TEARDOWN(suite, name);                                                                         \
+    void suite##_##name(StatusInfo *status_info, void **ctx);                                      \
     __attribute__((constructor)) void reg_##suite##_##name() {                                     \
-        register_test(#suite, #name, suite##_##name);                                              \
+        register_test(#suite, #name, suite##_##name, suite##_##name##_setup,                       \
+                      suite##_##name##_teardown);                                                  \
     }                                                                                              \
-    void suite##_##name(StatusInfo *status_info)
+    void suite##_##name(StatusInfo *status_info, void **ctx)
 
 #endif // SOUFFLE_H

@@ -5,8 +5,20 @@
 #include <unistd.h>
 // The only needed header here.
 #include "../souffle.h"
-
-TEST(MySuite, TestCase1) { ASSERT_TRUE(false); }
+SETUP(MySuite, TestCase1) {
+    int *data = malloc(sizeof(int));
+    assert(data);
+    *data = 5;
+    *ctx = data;
+    printf("HERE!\n");
+}
+TEST(MySuite, TestCase1) {
+    ASSERT_TRUE(true);
+    int *data = (int *)*ctx;
+    ASSERT_NOT_NULL(data);
+    ASSERT_EQ(*data, 5);
+}
+TEARDOWN(MySuite, TestCase1) { free(*ctx); }
 
 TEST(MySuite, test_number_eq) {
     int a = 5;

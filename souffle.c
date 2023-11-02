@@ -114,13 +114,15 @@ static void test_vec_push(TestsVec *tv, Test t) {
 void err_print(StatusInfo *status_info, const char *file, int lineno, const char *fmt, ...) {
     va_list args;
     va_start(args, fmt);
-    int idx = snprintf((status_info->fail_msg), 128, "[" UNDERLINED "%s:%d" RESET "]: ", file, lineno);
+    int idx =
+        snprintf((status_info->fail_msg), 128, "[" UNDERLINED "%s:%d" RESET "]: ", file, lineno);
     idx += vsnprintf(status_info->fail_msg + idx, 128, fmt, args);
     // Cleanup
     va_end(args);
 }
 
-void register_test(const char *suite, const char *name, TestFunc func) {
+void register_test(const char *suite, const char *name, TestFunc func, SetupFunc setup,
+                   TeardownFunc teardown) {
     if (test_suites == NULL) {
         test_suites = kh_init(str_map);
     }
@@ -142,6 +144,8 @@ void register_test(const char *suite, const char *name, TestFunc func) {
     Test t = {
         .func = func,
         .name = name,
+        .setup = setup,
+        .teardown = teardown,
     };
     if (ret > 0) { // new key; initialize value to a new vec
         kh_value(test_suites, k) = test_vec_init();
@@ -205,9 +209,9 @@ void run_all_tests() {
             TestsVec *tv = kh_val(test_suites, k);
             string_append(output, "\n⣿ Suite: %.*s ⣿\n", max_cols, suite_name);
             for (size_t idx = 0; idx < tv->len; ++idx) {
-
                 int padding = max_cols - strlen(tv->tests[idx].name);
-                string_append(output, "  🧪 %.*s ........", max_cols, tv->tests[idx].name);
+                string_append(output, "  %s 🧪 %.*s ........", tv->tests[idx].setup ? "⚙" : " ",
+                              max_cols, tv->tests[idx].name);
 
                 for (int i = 0; i < padding; ++i) {
                     string_append(output, ".");
@@ -231,7 +235,15 @@ void run_all_tests() {
                         .fail_msg = {0},
                     };
                     alarm(20);
-                    tv->tests[idx].func(&tstatus);
+                    void *ctx_internl = NULL;
+                    void **ctx = &ctx_internl;
+                    if (tv->tests[idx].setup) {
+                        tv->tests[idx].setup(ctx);
+                    }
+                    tv->tests[idx].func(&tstatus, ctx);
+                    if (tv->tests[idx].teardown) {
+                        tv->tests[idx].teardown(ctx);
+                    }
                     int wret = write(pipefd[1], tstatus.fail_msg, 128);
                     if (wret == -1) {
                         perror("Failed to write to pipe");
@@ -260,8 +272,7 @@ void run_all_tests() {
                             passed += 1;
                             break;
                         case Fail:
-                            string_append(output,
-                                          " " RED "[FAILED, %ldms]" RESET "\n\t  > %s\n\n",
+                            string_append(output, " " RED "[FAILED, %ldms]" RESET "\n\t  > %s\n\n",
                                           elapsed_ms, buf);
                             failed += 1;
                             break;
