@@ -20,6 +20,7 @@
 #include "souffle.h"
 #include "stdlib.h"
 
+#define UNDERLINED "\033[4m"
 #define GREEN "\033[0;32m"
 #define RED "\033[0;31m"
 #define MAGENTA "\033[35m"
@@ -113,8 +114,8 @@ static void test_vec_push(TestsVec *tv, Test t) {
 void err_print(StatusInfo *status_info, const char *file, int lineno, const char *fmt, ...) {
     va_list args;
     va_start(args, fmt);
-    int idx = vsnprintf(status_info->fail_msg, 128, fmt, args);
-    idx += snprintf((status_info->fail_msg) + idx, 128, " in [%s:%d]", file, lineno);
+    int idx = snprintf((status_info->fail_msg), 128, "[" UNDERLINED "%s:%d" RESET "]: ", file, lineno);
+    idx += vsnprintf(status_info->fail_msg + idx, 128, fmt, args);
     // Cleanup
     va_end(args);
 }
@@ -260,7 +261,7 @@ void run_all_tests() {
                             break;
                         case Fail:
                             string_append(output,
-                                          " " RED "[FAILED, %ldms]" RESET "\n\t  > Details: %s\n\n",
+                                          " " RED "[FAILED, %ldms]" RESET "\n\t  > %s\n\n",
                                           elapsed_ms, buf);
                             failed += 1;
                             break;
