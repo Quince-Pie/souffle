@@ -18,6 +18,10 @@
 #define GREY "\033[90m"
 #define RESET "\033[0m"
 
+// Separator
+static const char *DASHES =
+    "-------------------------------------------------------------------------------";
+
 KHASH_MAP_INIT_STR(str_map, TestsVec *)
 khash_t(str_map) * test_suites;
 
@@ -49,17 +53,11 @@ static void test_vec_push(TestsVec *tv, Test t) {
     return;
 }
 
-void err_print(const char *file, int lineno, const char *fmt, ...) {
-
+void err_print(StatusInfo *status_info, const char *file, int lineno, const char *fmt, ...) {
     va_list args;
     va_start(args, fmt);
-    fprintf(stderr, " " RED "[FAILED, 0ms]" RESET "\n");
-    // Print the expected vs actual message
-    fprintf(stderr, "\t  > Details: ");
-    vfprintf(stderr, fmt, args);
-    fprintf(stderr, " in [%s:%d]", file, lineno);
-    fprintf(stderr, "\n\n");
-
+    int idx = vsnprintf(status_info->fail_msg, 128, fmt, args);
+    idx += snprintf((status_info->fail_msg) + idx, 128, " in [%s:%d]", file, lineno);
     // Cleanup
     va_end(args);
 }
@@ -68,9 +66,10 @@ void register_test(const char *suite, const char *name, TestFunc func) {
     if (test_suites == NULL) {
         test_suites = kh_init(str_map);
     }
+    assert(test_suites);
     int ret;
     khiter_t k = kh_put(str_map, test_suites, suite, &ret);
-    if (ret < 0) {
+    if (ret == -1) {
         perror("Failed to access hash table");
         exit(EXIT_FAILURE);
     }
@@ -82,7 +81,7 @@ void register_test(const char *suite, const char *name, TestFunc func) {
         .func = func,
         .name = name,
     };
-    if (ret) { // new key; initialize value to a new vec
+    if (ret > 0) { // new key; initialize value to a new vec
         kh_value(test_suites, k) = test_vec_init();
     }
     TestsVec *tv = kh_value(test_suites, k);
@@ -104,6 +103,7 @@ void alarm_setup() {
 }
 
 void run_all_tests() {
+    // Setup Printing End Column
     struct winsize w;
     if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) == -1) {
         w.ws_col = 80;
@@ -112,6 +112,7 @@ void run_all_tests() {
     int max_cols = largest_test_name > cols - 31 ? cols - 31 : largest_test_name;
 
     assert(test_suites);
+    // Result Header
     khint_t scount = kh_size(test_suites);
     time_t t = time(NULL);
     struct tm timeinfo;
@@ -123,11 +124,9 @@ void run_all_tests() {
 
     fprintf(stderr, "=== Test Run Started ===\n");
     fprintf(stderr, "Date: %s | Time: %s UTC\n", date, time);
-    fprintf(stderr,
-            "-------------------------------------------------------------------------------\n\n");
+    fprintf(stderr, "%s\n\n", DASHES);
     fprintf(stderr, "Running %zu tests in %d suites\n", tcount, scount);
-    fprintf(stderr,
-            "-------------------------------------------------------------------------------\n");
+    fprintf(stderr, "%s\n", DASHES);
 
     int passed = 0;
     int failed = 0;
@@ -148,26 +147,55 @@ void run_all_tests() {
                 for (int i = 0; i < padding; ++i) {
                     fprintf(stderr, ".");
                 }
+                // setup pipes for transmitting fail info.
+                int pipefd[2];
+                if (pipe(pipefd) == -1) {
+                    perror("Pipe failed");
+                    exit(EXIT_FAILURE);
+                }
+                struct timespec start, end;
+                timespec_get(&start, TIME_UTC);
                 pid_t pid = fork();
                 if (pid == 0) {
                     // child process
+                    close(pipefd[0]);
                     alarm_setup();
+                    StatusInfo tstatus = {
+                        .status = Success,
+                        .fail_msg = {0},
+                    };
                     alarm(20);
-                    enum Status tstatus = Success;
                     tv->tests[idx].func(&tstatus);
-                    exit(tstatus);
+                    int wret = write(pipefd[1], tstatus.fail_msg, 128);
+                    if (wret == -1) {
+                        perror("Failed to write to pipe");
+                    }
+                    close(pipefd[1]);
+                    exit(tstatus.status);
                 } else {
+                    close(pipefd[1]);
                     // parent process
                     int status;
                     waitpid(pid, &status, 0);
-
+                    timespec_get(&end, TIME_UTC);
+                    long elapsed_ms = (end.tv_sec - start.tv_sec) * 1000 +
+                                      (end.tv_nsec - start.tv_nsec) / 1000000;
+                    char buf[128] = {0};
+                    int rret = read(pipefd[0], buf, 128);
+                    if (rret == -1) {
+                        perror("Failed to read to pipe");
+                    }
+                    close(pipefd[0]);
                     if (WIFEXITED(status)) {
                         switch ((enum Status)WEXITSTATUS(status)) {
                         case Success:
-                            fprintf(stderr, " " GREEN "[PASSED, 0ms]" RESET "\n");
+                            fprintf(stderr, " " GREEN "[PASSED, %ldms]" RESET "\n", elapsed_ms);
                             passed += 1;
                             break;
                         case Fail:
+                            fprintf(stderr,
+                                    " " RED "[FAILED, %ldms]" RESET "\n\t  > Details: %s\n\n",
+                                    elapsed_ms, buf);
                             failed += 1;
                             break;
                         case Skip:
@@ -192,16 +220,14 @@ void run_all_tests() {
     }
 
     kh_destroy(str_map, test_suites);
-    fprintf(stderr,
-            "\n-------------------------------------------------------------------------------\n");
+    fprintf(stderr, "\n%s\n", DASHES);
     fprintf(stderr, "=== Test Run Summary ===\n");
     fprintf(stderr,
             "Total Tests: %zu | " GREEN "Passed" RESET ": %d | " RED "Failed" RESET
             ": %d | " MAGENTA "Crashed" RESET ": %d | " YELLOW "Skipped" RESET ": %d | " GREY
             "Timeout" RESET ": %d\n",
             tcount, passed, failed, crashed, skipped, timeout);
-    fprintf(stderr,
-            "-------------------------------------------------------------------------------\n");
+    fprintf(stderr, "%s\n", DASHES);
 }
 
 __attribute__((weak)) int main(void) {

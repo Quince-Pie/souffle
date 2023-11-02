@@ -1,6 +1,7 @@
 #ifndef SOUFFLE_H
 #define SOUFFLE_H
 
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -11,16 +12,22 @@ enum Status {
     Timeout,
 };
 
+typedef struct StatusInfo {
+    enum Status status;
+    char fail_msg[128];
+} StatusInfo;
+
 // Utility macro: Make sure the function is only used the same way as printf
 #define PRINTF(x) __attribute__((__format__(__printf__, (x), (x + 1))))
 
-void err_print(const char *file, int lineno, const char *fmt, ...) PRINTF(3);
+void err_print(StatusInfo *status_info, const char *file, int lineno, const char *fmt, ...)
+    PRINTF(4);
 
-#define LOG_FAIL(fmt, ...) err_print(__FILE__, __LINE__, fmt, ##__VA_ARGS__)
+#define LOG_FAIL(fmt, ...) err_print(status_info, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
 
 #define SKIP_TEST()                                                                                \
     ({                                                                                             \
-        *status = Skip;                                                                            \
+        status_info->status = Skip;                                                                \
         return;                                                                                    \
     })
 
@@ -32,8 +39,8 @@ void err_print(const char *file, int lineno, const char *fmt, ...) PRINTF(3);
 #define ASSERT_TRUE(cond)                                                                          \
     ({                                                                                             \
         if (!cond) {                                                                               \
+            status_info->status = Fail;                                                            \
             LOG_FAIL("Expected: \"true\", got: \"%s\"", #cond);                                    \
-            *status = Fail;                                                                        \
             return;                                                                                \
         }                                                                                          \
     })
@@ -42,14 +49,14 @@ void err_print(const char *file, int lineno, const char *fmt, ...) PRINTF(3);
     ({                                                                                             \
         static_assert(_Generic((a), typeof(b): 1, default: 0), "Type mismatch");                   \
         if (a != b) {                                                                              \
+            status_info->status = Fail;                                                            \
             if (ISFLOAT(a)) {                                                                      \
                 LOG_FAIL("Expected: \"%Lf\", got: \"%Lf\"", (long double)a, (long double)b);       \
             } else if (ISUNSIGNED(a)) {                                                            \
-                LOG_FAIL("Expected: \"%zu\", got: \"%zu\"", (size_t)a, (size_t)b);                 \
+                LOG_FAIL("Expected: \"%zu\", got: \"%zu\"", (uintmax_t)a, (uintmax_t)b);           \
             } else {                                                                               \
-                LOG_FAIL("Expected: \"%zd\", got: \"%zd\"", (ssize_t)a, (ssize_t)b);               \
+                LOG_FAIL("Expected: \"%zd\", got: \"%zd\"", (intmax_t)a, (intmax_t)b);             \
             }                                                                                      \
-            *status = Fail;                                                                        \
             return;                                                                                \
         }                                                                                          \
     })
@@ -58,14 +65,14 @@ void err_print(const char *file, int lineno, const char *fmt, ...) PRINTF(3);
     ({                                                                                             \
         static_assert(_Generic((a), typeof(b): 1, default: 0), "Type mismatch");                   \
         if (a == b) {                                                                              \
+            status_info->status = Fail;                                                            \
             if (ISFLOAT(a)) {                                                                      \
                 LOG_FAIL("Expected: \"%Lf\", got: \"%Lf\"", (long double)a, (long double)b);       \
             } else if (ISUNSIGNED(a)) {                                                            \
-                LOG_FAIL("Expected: \"%zu\", got: \"%zu\"", (size_t)a, (size_t)b);                 \
+                LOG_FAIL("Expected: \"%zu\", got: \"%zu\"", (uintmax_t)a, (uintmax_t)b);           \
             } else {                                                                               \
-                LOG_FAIL("Expected: \"%zd\", got: \"%zd\"", (ssize_t)a, (ssize_t)b);               \
+                LOG_FAIL("Expected: \"%zd\", got: \"%zd\"", (intmax_t)a, (intmax_t)b);             \
             }                                                                                      \
-            *status = Fail;                                                                        \
             return;                                                                                \
         }                                                                                          \
     })
@@ -74,14 +81,14 @@ void err_print(const char *file, int lineno, const char *fmt, ...) PRINTF(3);
     ({                                                                                             \
         static_assert(_Generic((a), typeof(b): 1, default: 0), "Type mismatch");                   \
         if (a >= b) {                                                                              \
+            status_info->status = Fail;                                                            \
             if (ISFLOAT(a)) {                                                                      \
                 LOG_FAIL("Expected: \"%Lf\", got: \"%Lf\"", (long double)a, (long double)b);       \
             } else if (ISUNSIGNED(a)) {                                                            \
-                LOG_FAIL("Expected: \"%zu\", got: \"%zu\"", (size_t)a, (size_t)b);                 \
+                LOG_FAIL("Expected: \"%zu\", got: \"%zu\"", (uintmax_t)a, (uintmax_t)b);           \
             } else {                                                                               \
-                LOG_FAIL("Expected: \"%zd\", got: \"%zd\"", (ssize_t)a, (ssize_t)b);               \
+                LOG_FAIL("Expected: \"%zd\", got: \"%zd\"", (intmax_t)a, (intmax_t)b);             \
             }                                                                                      \
-            *status = Fail;                                                                        \
             return;                                                                                \
         }                                                                                          \
     })
@@ -90,14 +97,14 @@ void err_print(const char *file, int lineno, const char *fmt, ...) PRINTF(3);
     ({                                                                                             \
         static_assert(_Generic((a), typeof(b): 1, default: 0), "Type mismatch");                   \
         if (a <= b) {                                                                              \
+            status_info->status = Fail;                                                            \
             if (ISFLOAT(a)) {                                                                      \
                 LOG_FAIL("Expected: \"%Lf\", got: \"%Lf\"", (long double)a, (long double)b);       \
             } else if (ISUNSIGNED(a)) {                                                            \
-                LOG_FAIL("Expected: \"%zu\", got: \"%zu\"", (size_t)a, (size_t)b);                 \
+                LOG_FAIL("Expected: \"%zu\", got: \"%zu\"", (uintmax_t)a, (uintmax_t)b);           \
             } else {                                                                               \
-                LOG_FAIL("Expected: \"%zd\", got: \"%zd\"", (ssize_t)a, (ssize_t)b);               \
+                LOG_FAIL("Expected: \"%zd\", got: \"%zd\"", (intmax_t)a, (intmax_t)b);             \
             }                                                                                      \
-            *status = Fail;                                                                        \
             return;                                                                                \
         }                                                                                          \
     })
@@ -108,8 +115,8 @@ void err_print(const char *file, int lineno, const char *fmt, ...) PRINTF(3);
                       "Element type mismatch");                                                    \
         for (typeof(size) i = 0; i < size; ++i) {                                                  \
             if (((arr1)[i] != (arr2)[i])) {                                                        \
+                status_info->status = Fail;                                                        \
                 LOG_FAIL("Expected: \"%d\", got: \"%d\" in Idx: %d", a[i], b[i], i);               \
-                *status = Fail;                                                                    \
                 return;                                                                            \
             }                                                                                      \
         }                                                                                          \
@@ -121,8 +128,8 @@ void err_print(const char *file, int lineno, const char *fmt, ...) PRINTF(3);
                       "Element type mismatch");                                                    \
         for (typeof(size) i = 0; i < size; ++i) {                                                  \
             if (((arr1)[i] == (arr2)[i])) {                                                        \
+                status_info->status = Fail;                                                        \
                 LOG_FAIL("Expected: \"%d\", got: \"%d\" in Idx: %d", a[i], b[i], i);               \
-                *status = Fail;                                                                    \
                 return;                                                                            \
             }                                                                                      \
         }                                                                                          \
@@ -130,7 +137,7 @@ void err_print(const char *file, int lineno, const char *fmt, ...) PRINTF(3);
 
 // -------------- ASSERTIONS END --------------
 
-typedef void (*TestFunc)(enum Status *status);
+typedef void (*TestFunc)(StatusInfo *status_info);
 
 typedef struct Test {
     const char *name;
@@ -147,10 +154,10 @@ void register_test(const char *suite, const char *name, TestFunc func);
 void run_all_tests();
 
 #define TEST(suite, name)                                                                          \
-    void suite##_##name(enum Status *status);                                                      \
+    void suite##_##name(StatusInfo *status_info);                                                  \
     __attribute__((constructor)) void reg_##suite##_##name() {                                     \
         register_test(#suite, #name, suite##_##name);                                              \
     }                                                                                              \
-    void suite##_##name(enum Status *status)
+    void suite##_##name(StatusInfo *status_info)
 
 #endif // SOUFFLE_H

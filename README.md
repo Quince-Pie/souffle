@@ -44,4 +44,4 @@ To build Souffle, simply create your test file and add souffle.c next to it when
 
 - Add support for MSVC.
 - Add more macro assertions to simplify testing.
-- Implement skips and setup phase.
+- Implement setup and teardown phase.

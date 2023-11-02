@@ -26,9 +26,7 @@ TEST(MySuite, pass_fail_pass) {
     ASSERT_EQ(1, 1);
 }
 
-TEST(MySuite, float_check) {
-    ASSERT_EQ(1.5, 2.5);
-}
+TEST(MySuite, float_check) { ASSERT_EQ(1.5, 2.5); }
 
 TEST(MySuite, pass_fail) {
     ASSERT_EQ(1, 1);
@@ -55,6 +53,12 @@ TEST(arr, arr1) {
     int a[3] = {1, 2, 3};
     int b[3] = {1, 2, 3};
     ASSERT_ARR_EQ(a, b, 3);
+}
+TEST(MySuite, timeoutf) {
+    for (size_t i = 0; i < 3; i++) {
+        sleep(1);
+        ASSERT_EQ(i, i);
+    }
 }
 
 TEST(MySuite, timeout) {
