@@ -1,6 +1,6 @@
 project('souffle', 'c',
      default_options : ['warning_level=3', 'c_std=c2x', 'optimization=3'],
-    version: '0.9')
+    version: '0.100.0')
 
 
 souffle_srcs = files('src/souffle.c')

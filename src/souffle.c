@@ -87,8 +87,7 @@ KHASH_MAP_INIT_STR(str_map, TestsVec *)
 khash_t(str_map) * test_suites;
 
 static size_t tcount = 0;
-static int largest_test_name = 0;
-static int largest_suite_name = 0;
+static int largest_name = 0;
 
 static TestsVec *test_vec_init() {
     TestsVec *tv = malloc(sizeof(TestsVec));
@@ -138,12 +137,12 @@ void register_test(const char *suite, const char *name, TestFunc func, SetupFunc
         exit(EXIT_FAILURE);
     }
     int test_name_len = strlen(name);
-    if (test_name_len > largest_test_name) {
-        largest_test_name = test_name_len;
+    if (test_name_len > largest_name) {
+        largest_name = test_name_len;
     }
     int suite_name_len = strlen(suite);
-    if (suite_name_len > largest_suite_name) {
-        largest_suite_name = suite_name_len;
+    if (suite_name_len > largest_name) {
+        largest_name = suite_name_len;
     }
     Test t = {
         .func = func,
@@ -186,6 +185,8 @@ int run_all_tests() {
     }
     int cols = w.ws_col;
     int max_cols = cols > 53 ? 53 : cols;
+    max_cols =
+        largest_name < max_cols ? max_cols : (largest_name > cols - 4 ? cols - 4 : largest_name);
 
     String *output = string_init();
 
@@ -368,6 +369,8 @@ int run_all_tests_win() {
     GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
     int cols = csbi.srWindow.Right - csbi.srWindow.Left + 1;
     int max_cols = cols > 53 ? 53 : cols;
+    max_cols =
+        largest_name < max_cols ? max_cols : (largest_name > cols - 4 ? cols - 4 : largest_name);
     String *output = string_init();
 
     assert(test_suites);
