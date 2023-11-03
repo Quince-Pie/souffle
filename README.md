@@ -29,6 +29,8 @@ Souffle aims to be simple and easy to use while offering as much helpful feature
 
 ### Example Output
 
+Output of [examples/basic.c](examples/basic.c):
+
 <pre><code>
 === Test Run Started ===
 ____________________________________________________________________________

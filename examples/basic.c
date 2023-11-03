@@ -7,27 +7,27 @@
 #endif
 // !!!! The only needed header here. !!!!
 #include "../src/souffle.h"
-SETUP(MySuite, TestCase1) {
+SETUP(main_suite, TestCase1) {
     int *data = malloc(sizeof(int));
     assert(data);
     *data = 5;
     *ctx = data;
 }
-TEST(MySuite, TestCase1) {
+TEST(main_suite, TestCase1) {
     ASSERT_TRUE(true);
     int *data = (int *)*ctx;
     ASSERT_NOT_NULL(data);
     ASSERT_EQ(*data, 5);
 }
-TEARDOWN(MySuite, TestCase1) { free(*ctx); }
+TEARDOWN(main_suite, TestCase1) { free(*ctx); }
 
-TEST(MySuite, test_number_eq) {
+TEST(main_suite, test_number_eq) {
     int a = 5;
     int b = 1;
     ASSERT_EQ(a, b);
 }
 
-TEST(MySuite, fffff) {
+TEST(main_suite, exception_test) {
 // ASSERT_EQ(12, 1);
 #ifndef _WIN32
     raise(SIGSEGV);
@@ -36,27 +36,22 @@ TEST(MySuite, fffff) {
 #endif
 }
 
-TEST(MySuite, pass) { ASSERT_EQ(1, 1); }
+TEST(main_suite, pass) { ASSERT_EQ(1, 1); }
 
-TEST(MySuite, pass_fail_pass) {
+TEST(main_suite, pass_fail_pass) {
     ASSERT_EQ(1, 1);
     ASSERT_EQ(2, 1);
     ASSERT_EQ(1, 1);
 }
 
-TEST(MySuite, float_check) { ASSERT_EQ(1.5, 2.5); }
+TEST(main_suite, float_check) { ASSERT_EQ(1.5, 2.5); }
 
-TEST(MySuite, pass_fail) {
+TEST(main_suite, pass_fail) {
     ASSERT_EQ(1, 1);
     ASSERT_EQ(2, 1);
 }
 
-TEST(MySuite, pass_crash) {
-    ASSERT_EQ(1, 1);
-    // raise(SIGSEGV);
-}
-
-TEST(MySuite, skip_me) {
+TEST(main_suite, skip_me) {
     SKIP_TEST();
     ASSERT_EQ(1, 1);
 }
@@ -68,12 +63,12 @@ TEST(
     ASSERT_EQ(1, 1);
 }
 
-TEST(arr, arr1) {
+TEST(arr_suite, array_check) {
     int a[3] = {1, 2, 3};
     int b[3] = {1, 2, 3};
     ASSERT_ARR_EQ(a, b, 3);
 }
-TEST(MySuite, timeoutf) {
+TEST(main_suite, long_test) {
     for (size_t i = 0; i < 3; i++) {
 #ifndef _WIN32
         sleep(1);
@@ -84,7 +79,7 @@ TEST(MySuite, timeoutf) {
     }
 }
 
-TEST(MySuite, timeout) {
+TEST(main_suite, timeout_test) {
     for (size_t i = 0; i < 10000000000; i++) {
 #ifndef _WIN32
         sleep(1);
@@ -95,4 +90,4 @@ TEST(MySuite, timeout) {
     }
 }
 
-TEST(huh, 1) { ASSERT_TRUE(true); }
+TEST(suite_2, is_true) { ASSERT_TRUE(true); }
