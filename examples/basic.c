@@ -93,3 +93,5 @@ TEST(MySuite, timeout) {
         ASSERT_EQ(i, i);
     }
 }
+
+TEST(huh, 1) { ASSERT_TRUE(true); }

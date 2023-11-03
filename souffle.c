@@ -30,7 +30,7 @@
 
 // Separator
 static const char *DASHES =
-    "-------------------------------------------------------------------------------";
+    "_________________________________________________________________________________";
 
 typedef struct String {
     char *buf;
@@ -180,7 +180,7 @@ void run_all_tests() {
         w.ws_col = 80;
     }
     int cols = w.ws_col;
-    int max_cols = largest_test_name > cols - 31 ? cols - 31 : largest_test_name;
+    int max_cols = cols > 53 ? 53 : cols;
 
     String *output = string_init();
 
@@ -203,11 +203,15 @@ void run_all_tests() {
         if (kh_exist(test_suites, k)) {
             const char *suite_name = kh_key(test_suites, k);
             TestsVec *tv = kh_val(test_suites, k);
-            string_append(output, "\n⣿ Suite: %.*s ⣿\n", max_cols, suite_name);
+            int spaces_required = max_cols - 11 - strlen(suite_name);
+            if (spaces_required < 0)
+                spaces_required = 0;
+            string_append(output, "\n⣿ Suite: %.*s %*s⣿\n", max_cols - 11, suite_name,
+                          spaces_required, "");
             for (size_t idx = 0; idx < tv->len; ++idx) {
-                int padding = max_cols - strlen(tv->tests[idx].name);
-                string_append(output, "  %s 🧪 %.*s ........", tv->tests[idx].setup ? "⚙" : " ",
-                              max_cols, tv->tests[idx].name);
+                int padding = max_cols - strlen(tv->tests[idx].name) - 28;
+                string_append(output, "  %s 🧪 %.*s ......", tv->tests[idx].setup ? "⚙" : " ",
+                              max_cols - 28, tv->tests[idx].name);
 
                 for (int i = 0; i < padding; ++i) {
                     string_append(output, ".");
@@ -304,7 +308,7 @@ void run_all_tests() {
                   ": %d | " MAGENTA "Crashed" RESET ": %d | " YELLOW "Skipped" RESET ": %d | " GREY
                   "Timeout" RESET ": %d\n",
                   tcount, passed, failed, crashed, skipped, timeout);
-    string_append(output, "%.*s\n",max_cols, DASHES);
+    string_append(output, "%.*s\n", max_cols, DASHES);
     fprintf(stderr, "%s", output->buf);
     string_free(output);
 }
@@ -357,8 +361,7 @@ void run_all_tests_win() {
     CONSOLE_SCREEN_BUFFER_INFO csbi;
     GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
     int cols = csbi.srWindow.Right - csbi.srWindow.Left + 1;
-    int max_cols = largest_test_name > cols - 31 ? cols - 31 : largest_test_name;
-
+    int max_cols = cols > 53 ? 53 : cols;
     String *output = string_init();
 
     assert(test_suites);
@@ -366,9 +369,9 @@ void run_all_tests_win() {
     khint_t scount = kh_size(test_suites);
 
     string_append(output, "=== Test Run Started ===\n");
-    string_append(output, "%s\n\n", DASHES);
+    string_append(output, "%.*s\n\n", max_cols, DASHES);
     string_append(output, "Running %zu tests in %d suites\n", tcount, scount);
-    string_append(output, "%s\n", DASHES);
+    string_append(output, "%.*s\n", max_cols, DASHES);
 
     int passed = 0;
     int failed = 0;
@@ -380,13 +383,16 @@ void run_all_tests_win() {
         if (kh_exist(test_suites, k)) {
             const char *suite_name = kh_key(test_suites, k);
             TestsVec *tv = kh_val(test_suites, k);
-            string_append(output, "\n⣿ Suite: %.*s ⣿\n", max_cols, suite_name);
+            int spaces_required = max_cols - 11 - strlen(suite_name);
+            if (spaces_required < 0)
+                spaces_required = 0;
+            string_append(output, "\n⣿ Suite: %.*s %*s⣿\n", max_cols - 11, suite_name,
+                          spaces_required, "");
             for (size_t idx = 0; idx < tv->len; ++idx) {
 
-                int padding = max_cols - strlen(tv->tests[idx].name);
-                string_append(output, "  %s 🧪 %.*s ........", tv->tests[idx].setup ? "⚙" : " ",
-                              max_cols, tv->tests[idx].name);
-
+                int padding = max_cols - strlen(tv->tests[idx].name) - 28;
+                string_append(output, "  %s 🧪 %.*s ......", tv->tests[idx].setup ? "⚙" : " ",
+                              max_cols - 28, tv->tests[idx].name);
                 for (int i = 0; i < padding; ++i) {
                     string_append(output, ".");
                 }
@@ -452,14 +458,14 @@ void run_all_tests_win() {
     }
 
     kh_destroy(str_map, test_suites);
-    string_append(output, "\n%s\n", DASHES);
+    string_append(output, "\n%.*s\n", max_cols, DASHES);
     string_append(output, "=== Test Run Summary ===\n");
     string_append(output,
                   "Total Tests: %zu | " GREEN "Passed" RESET ": %d | " RED "Failed" RESET
                   ": %d | " MAGENTA "Crashed" RESET ": %d | " YELLOW "Skipped" RESET ": %d | " GREY
                   "Timeout" RESET ": %d\n",
                   tcount, passed, failed, crashed, skipped, timeout);
-    string_append(output, "%s\n", DASHES);
+    string_append(output, "%.*s\n", max_cols, DASHES);
     fprintf(stderr, "%s", output->buf);
     string_free(output);
 }

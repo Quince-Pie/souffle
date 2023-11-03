@@ -43,7 +43,7 @@ void err_print(StatusInfo *status_info, const char *file, int lineno, const char
     do {                                                                                           \
         if (!cond) {                                                                               \
             status_info->status = Fail;                                                            \
-            LOG_FAIL("Expected: \"true\", got: \"%s\"", #cond);                                    \
+            LOG_FAIL("\n\t  >> Expected: \"true\"\n\t  >> Got: \"%s\"", #cond);                    \
             return;                                                                                \
         }                                                                                          \
     } while (0)
@@ -54,11 +54,14 @@ void err_print(StatusInfo *status_info, const char *file, int lineno, const char
         if (a != b) {                                                                              \
             status_info->status = Fail;                                                            \
             if (ISFLOAT(a)) {                                                                      \
-                LOG_FAIL("Expected: \"%Lf\", got: \"%Lf\"", (long double)a, (long double)b);       \
+                LOG_FAIL("\n\t  >> Expected: \"%Lf\"\n\t  >> Got: \"%Lf\"", (long double)a,        \
+                         (long double)b);                                                          \
             } else if (ISUNSIGNED(a)) {                                                            \
-                LOG_FAIL("Expected: \"%zu\", got: \"%zu\"", (uintmax_t)a, (uintmax_t)b);           \
+                LOG_FAIL("\n\t  >> Expected: \"%zu\"\n\t  >> Got: \"%zu\"", (uintmax_t)a,          \
+                         (uintmax_t)b);                                                            \
             } else {                                                                               \
-                LOG_FAIL("Expected: \"%zd\", got: \"%zd\"", (intmax_t)a, (intmax_t)b);             \
+                LOG_FAIL("\n\t  >> Expected: \"%zd\"\n\t  >> Got: \"%zd\"", (intmax_t)a,           \
+                         (intmax_t)b);                                                             \
             }                                                                                      \
             return;                                                                                \
         }                                                                                          \
@@ -68,7 +71,7 @@ void err_print(StatusInfo *status_info, const char *file, int lineno, const char
     do {                                                                                           \
         if (a != NULL) {                                                                           \
             status_info->status = Fail;                                                            \
-            LOG_FAIL("Expected: \"NULL\", got: \"%p\"", a);                                        \
+            LOG_FAIL("\n\t  >> Expected: \"NULL\"\n\t  >> Got: \"%p\"", a);                        \
             return;                                                                                \
         }                                                                                          \
     } while (0)
@@ -77,7 +80,7 @@ void err_print(StatusInfo *status_info, const char *file, int lineno, const char
     do {                                                                                           \
         if (a == NULL) {                                                                           \
             status_info->status = Fail;                                                            \
-            LOG_FAIL("Expected: \"not NULL\", got: \"%p\"", a);                                    \
+            LOG_FAIL("\n\t  >> Expected: \"not NULL\"\n\t  >> Got: \"%p\"", a);                    \
             return;                                                                                \
         }                                                                                          \
     } while (0)
@@ -88,11 +91,14 @@ void err_print(StatusInfo *status_info, const char *file, int lineno, const char
         if (a == b) {                                                                              \
             status_info->status = Fail;                                                            \
             if (ISFLOAT(a)) {                                                                      \
-                LOG_FAIL("Expected: \"%Lf\", got: \"%Lf\"", (long double)a, (long double)b);       \
+                LOG_FAIL("\n\t  >> Expected: \"%Lf\"\n\t  >> Got: \"%Lf\"", (long double)a,        \
+                         (long double)b);                                                          \
             } else if (ISUNSIGNED(a)) {                                                            \
-                LOG_FAIL("Expected: \"%zu\", got: \"%zu\"", (uintmax_t)a, (uintmax_t)b);           \
+                LOG_FAIL("\n\t  >> Expected: \"%zu\"\n\t  >> Got: \"%zu\"", (uintmax_t)a,          \
+                         (uintmax_t)b);                                                            \
             } else {                                                                               \
-                LOG_FAIL("Expected: \"%zd\", got: \"%zd\"", (intmax_t)a, (intmax_t)b);             \
+                LOG_FAIL("\n\t  >> Expected: \"%zd\"\n\t  >> Got: \"%zd\"", (intmax_t)a,           \
+                         (intmax_t)b);                                                             \
             }                                                                                      \
             return;                                                                                \
         }                                                                                          \
@@ -104,11 +110,14 @@ void err_print(StatusInfo *status_info, const char *file, int lineno, const char
         if (a >= b) {                                                                              \
             status_info->status = Fail;                                                            \
             if (ISFLOAT(a)) {                                                                      \
-                LOG_FAIL("Expected: \"%Lf\", got: \"%Lf\"", (long double)a, (long double)b);       \
+                LOG_FAIL("\n\t  >> Expected: \"%Lf\"\n\t  >> Got: \"%Lf\"", (long double)a,        \
+                         (long double)b);                                                          \
             } else if (ISUNSIGNED(a)) {                                                            \
-                LOG_FAIL("Expected: \"%zu\", got: \"%zu\"", (uintmax_t)a, (uintmax_t)b);           \
+                LOG_FAIL("\n\t  >> Expected: \"%zu\"\n\t  >> Got: \"%zu\"", (uintmax_t)a,          \
+                         (uintmax_t)b);                                                            \
             } else {                                                                               \
-                LOG_FAIL("Expected: \"%zd\", got: \"%zd\"", (intmax_t)a, (intmax_t)b);             \
+                LOG_FAIL("\n\t  >> Expected: \"%zd\"\n\t  >> Got: \"%zd\"", (intmax_t)a,           \
+                         (intmax_t)b);                                                             \
             }                                                                                      \
             return;                                                                                \
         }                                                                                          \
@@ -120,11 +129,14 @@ void err_print(StatusInfo *status_info, const char *file, int lineno, const char
         if (a <= b) {                                                                              \
             status_info->status = Fail;                                                            \
             if (ISFLOAT(a)) {                                                                      \
-                LOG_FAIL("Expected: \"%Lf\", got: \"%Lf\"", (long double)a, (long double)b);       \
+                LOG_FAIL("\n\t  >> Expected: \"%Lf\"\n\t  >> Got: \"%Lf\"", (long double)a,        \
+                         (long double)b);                                                          \
             } else if (ISUNSIGNED(a)) {                                                            \
-                LOG_FAIL("Expected: \"%zu\", got: \"%zu\"", (uintmax_t)a, (uintmax_t)b);           \
+                LOG_FAIL("\n\t  >> Expected: \"%zu\"\n\t  >> Got: \"%zu\"", (uintmax_t)a,          \
+                         (uintmax_t)b);                                                            \
             } else {                                                                               \
-                LOG_FAIL("Expected: \"%zd\", got: \"%zd\"", (intmax_t)a, (intmax_t)b);             \
+                LOG_FAIL("\n\t  >> Expected: \"%zd\"\n\t  >> Got: \"%zd\"", (intmax_t)a,           \
+                         (intmax_t)b);                                                             \
             }                                                                                      \
             return;                                                                                \
         }                                                                                          \
@@ -137,7 +149,8 @@ void err_print(StatusInfo *status_info, const char *file, int lineno, const char
         for (typeof(size) i = 0; i < size; ++i) {                                                  \
             if (((arr1)[i] != (arr2)[i])) {                                                        \
                 status_info->status = Fail;                                                        \
-                LOG_FAIL("Expected: \"%d\", got: \"%d\" in Idx: %d", a[i], b[i], i);               \
+                LOG_FAIL("\n\t  >> Expected: \"%d\"\n\t  >> Got: \"%d\" in Idx: %d", a[i], b[i],   \
+                         i);                                                                       \
                 return;                                                                            \
             }                                                                                      \
         }                                                                                          \
@@ -150,7 +163,8 @@ void err_print(StatusInfo *status_info, const char *file, int lineno, const char
         for (typeof(size) i = 0; i < size; ++i) {                                                  \
             if (((arr1)[i] == (arr2)[i])) {                                                        \
                 status_info->status = Fail;                                                        \
-                LOG_FAIL("Expected: \"%d\", got: \"%d\" in Idx: %d", a[i], b[i], i);               \
+                LOG_FAIL("\n\t  >> Expected: \"%d\"\n\t  >> Got: \"%d\" in Idx: %d", a[i], b[i],   \
+                         i);                                                                       \
                 return;                                                                            \
             }                                                                                      \
         }                                                                                          \
