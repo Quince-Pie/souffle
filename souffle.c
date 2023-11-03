@@ -170,6 +170,10 @@ void alarm_setup() {
 }
 
 void run_all_tests() {
+    int timeout_time = getenv("SOUFFLE_TIMEOUT") ? atoi(getenv("SOUFFLE_TIMEOUT")) : 20;
+    if (timeout_time == 0) {
+        timeout_time = 20;
+    }
     // Setup Printing End Column
     struct winsize w;
     if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) == -1) {
@@ -181,18 +185,10 @@ void run_all_tests() {
     String *output = string_init();
 
     assert(test_suites);
-    // Result Header
     khint_t scount = kh_size(test_suites);
-    time_t t = time(NULL);
-    struct tm timeinfo;
-    struct tm *tm = gmtime_r(&t, &timeinfo);
-    char date[11];
-    char time[9];
-    strftime(date, sizeof(date), "%Y-%m-%d", tm);
-    strftime(time, sizeof(time), "%H:%M:%S", tm);
 
+    // Result Header
     string_append(output, "=== Test Run Started ===\n");
-    string_append(output, "Date: %s | Time: %s UTC\n", date, time);
     string_append(output, "%s\n\n", DASHES);
     string_append(output, "Running %zu tests in %d suites\n", tcount, scount);
     string_append(output, "%s\n", DASHES);
@@ -234,7 +230,7 @@ void run_all_tests() {
                         .status = Success,
                         .fail_msg = {0},
                     };
-                    alarm(20);
+                    alarm(timeout_time);
                     void *ctx_internl = NULL;
                     void **ctx = &ctx_internl;
                     if (tv->tests[idx].setup) {
@@ -343,6 +339,20 @@ DWORD WINAPI func_exec_timeout_win(LPVOID lpParam) {
 }
 
 void run_all_tests_win() {
+    const char *var_name = "SOUFFLE_TIMEOUT";
+    size_t required_size;
+    DWORD timeout_time = 20000;
+    getenv_s(&required_size, NULL, 0, var_name);
+    if (required_size != 0) {
+        char env_value[required_size];
+        getenv_s(&required_size, env_value, required_size, var_name);
+        errno = 0;
+        char *endptr;
+        unsigned long ret = strtoul(env_value, &endptr, 10);
+        if (endptr != env_value && errno == 0) {
+            timeout_time = ret * 1000;
+        }
+    }
     // Setup Printing End Column. Since we don't have ioctl in windows we need to use windows.h
     CONSOLE_SCREEN_BUFFER_INFO csbi;
     GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
@@ -398,7 +408,7 @@ void run_all_tests_win() {
                     exit(EXIT_FAILURE);
                 }
                 // wait for the thread to finish with a timeout
-                DWORD wait_result = WaitForSingleObject(thread, 20000);
+                DWORD wait_result = WaitForSingleObject(thread, timeout_time);
                 if (wait_result == WAIT_TIMEOUT) {
                     tstatus.status = Timeout;
                 } else if (wait_result == WAIT_FAILED) {

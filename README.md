@@ -42,8 +42,12 @@ To build Souffle, simply create your test file and add souffle.c next to it when
 
 ### Documentation
 
-
 Please view the examples under the examples folder for an example usage.
+
+#### Environment Variables
+
+- `SOUFFLE_TIMEOUT` - timeout in seconds.
+
 
 #### Test Definitions
 
