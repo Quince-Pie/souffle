@@ -207,13 +207,11 @@ int run_all_tests();
 #define TEST(suite, name)                                                                          \
     SETUP(suite, name);                                                                            \
     TEARDOWN(suite, name);                                                                         \
-    void suite##_##name(StatusInfo *status_info __attribute__((unused)),                           \
-                        void **ctx __attribute__((unused)));                                       \
+    void suite##_##name([[maybe_unused]] StatusInfo *status_info, [[maybe_unused]] void **ctx);    \
     __attribute__((constructor)) void reg_##suite##_##name() {                                     \
         register_test(#suite, #name, suite##_##name, suite##_##name##_setup,                       \
                       suite##_##name##_teardown);                                                  \
     }                                                                                              \
-    void suite##_##name(StatusInfo *status_info __attribute__((unused)),                           \
-                        void **ctx __attribute__((unused)))
+    void suite##_##name([[maybe_unused]] StatusInfo *status_info, [[maybe_unused]] void **ctx)
 
 #endif // SOUFFLE_H
