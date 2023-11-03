@@ -41,8 +41,8 @@ typedef struct String {
 static String *string_init() {
     String *str = malloc(sizeof(String));
     assert(str);
-    str->buf = malloc(128 * sizeof(char));
-    str->capacity = 128;
+    str->buf = malloc(1024 * sizeof(char));
+    str->capacity = 1024;
     str->len = 0;
     return str;
 }
@@ -51,11 +51,16 @@ static void string_free(String *str) {
     free(str->buf);
     free(str);
 }
-static void string_rewind(String *str) {
+static inline void string_rewind(String *str) {
     str->len = 0;
     str->buf[0] = '\0';
 }
-
+// dump a string to stdout and rewind
+static inline void string_dump(String *str) {
+    fprintf(stdout, "%s", str->buf);
+    fflush(stdout);
+    string_rewind(str);
+}
 void string_append(String *str, const char *fmt, ...) PRINTF(2);
 void string_append(String *str, const char *fmt, ...) {
     va_list args;
@@ -64,15 +69,14 @@ void string_append(String *str, const char *fmt, ...) {
     va_end(args);
 
     va_start(args, fmt);
-    if (size_needed + 1 > str->capacity - str->len) {
-        char *new_buf = realloc(str->buf, (size_t)(str->capacity * 2) * sizeof(char));
-        if (!new_buf) {
-            perror("Re-allocation failed");
-            free(str->buf);
-            exit(EXIT_FAILURE);
-        }
-        str->buf = new_buf;
+    if (size_needed + 1 > str->capacity) {
+        string_dump(str);
+        free(str->buf);
         str->capacity *= 2;
+        str->buf = malloc(str->capacity * sizeof(char));
+        assert(str->buf);
+    } else if (size_needed + 1 > str->capacity - str->len) {
+        string_dump(str);
     }
     str->len += vsnprintf(str->buf + str->len, str->capacity, fmt, args);
     // Cleanup
@@ -169,7 +173,7 @@ void alarm_setup() {
     sigaction(SIGALRM, &sa, NULL);
 }
 
-void run_all_tests() {
+int run_all_tests() {
     int timeout_time = getenv("SOUFFLE_TIMEOUT") ? atoi(getenv("SOUFFLE_TIMEOUT")) : 20;
     if (timeout_time == 0) {
         timeout_time = 20;
@@ -291,9 +295,6 @@ void run_all_tests() {
                         string_append(output, " " MAGENTA "[CRASHED, ☠ ]" RESET "\n");
                         crashed += 1;
                     }
-                    fprintf(stderr, "%s", output->buf);
-                    fflush(stderr);
-                    string_rewind(output);
                 }
             }
             test_vec_free(tv);
@@ -309,8 +310,12 @@ void run_all_tests() {
                   "Timeout" RESET ": %d\n",
                   tcount, passed, failed, crashed, skipped, timeout);
     string_append(output, "%.*s\n", max_cols, DASHES);
-    fprintf(stderr, "%s", output->buf);
+    fprintf(stdout, "%s", output->buf);
     string_free(output);
+    if (crashed > 0 || failed > 0 || timeout > 0) {
+        return -1;
+    }
+    return 0;
 }
 #else
 // Windows
@@ -342,7 +347,7 @@ DWORD WINAPI func_exec_timeout_win(LPVOID lpParam) {
     }
 }
 
-void run_all_tests_win() {
+int run_all_tests_win() {
     const char *var_name = "SOUFFLE_TIMEOUT";
     size_t required_size;
     DWORD timeout_time = 20000;
@@ -449,9 +454,6 @@ void run_all_tests_win() {
                     assert(0 && "Unreachable");
                 };
                 CloseHandle(thread);
-                fprintf(stderr, "%s", output->buf);
-                fflush(stderr);
-                string_rewind(output);
             }
             test_vec_free(tv);
         }
@@ -466,16 +468,20 @@ void run_all_tests_win() {
                   "Timeout" RESET ": %d\n",
                   tcount, passed, failed, crashed, skipped, timeout);
     string_append(output, "%.*s\n", max_cols, DASHES);
-    fprintf(stderr, "%s", output->buf);
+    fprintf(stdout, "%s", output->buf);
     string_free(output);
+    if (crashed > 0 || failed > 0 || timeout > 0) {
+        return -1;
+    }
+    return 0;
 }
 #endif
 
 __attribute__((weak)) int main(void) {
 #ifndef _WIN32
-    run_all_tests();
+    int ret = run_all_tests();
 #else
-    run_all_tests_win();
+    int ret = run_all_tests_win();
 #endif
-    return 0;
+    return ret;
 }

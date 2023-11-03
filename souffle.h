@@ -194,7 +194,7 @@ typedef struct TestsVec {
 void register_test(const char *suite, const char *name, TestFunc func, SetupFunc setup,
                    TeardownFunc teardown);
 
-void run_all_tests();
+int run_all_tests();
 
 #define SETUP(suite, name)                                                                         \
     extern void suite##_##name##_setup(void **ctx) __attribute__((weak));                          \
