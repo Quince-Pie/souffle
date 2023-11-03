@@ -11,6 +11,8 @@ enum Status {
     Fail,
     Skip,
     Timeout,
+    // Only for Windows since the tests run in a separate thread.
+    Crashed,
 };
 
 typedef struct StatusInfo {

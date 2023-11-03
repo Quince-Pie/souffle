@@ -5,15 +5,13 @@
 #include <Windows.h>
 #include <stdbool.h>
 #endif
-
-// The only needed header here.
+// !!!! The only needed header here. !!!!
 #include "../souffle.h"
 SETUP(MySuite, TestCase1) {
     int *data = malloc(sizeof(int));
     assert(data);
     *data = 5;
     *ctx = data;
-    printf("HERE!\n");
 }
 TEST(MySuite, TestCase1) {
     ASSERT_TRUE(true);
@@ -28,9 +26,10 @@ TEST(MySuite, test_number_eq) {
     int b = 1;
     ASSERT_EQ(a, b);
 }
+
 TEST(MySuite, fffff) {
 // ASSERT_EQ(12, 1);
-#ifndef _Win32
+#ifndef _WIN32
     raise(SIGSEGV);
 #else
     RaiseException(EXCEPTION_ACCESS_VIOLATION, 0, 0, NULL);

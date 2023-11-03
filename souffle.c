@@ -314,6 +314,34 @@ void run_all_tests() {
 }
 #else
 // Windows
+
+typedef struct ThreadInfo {
+    Test *test;
+    StatusInfo *status_info;
+} ThreadInfo;
+
+DWORD WINAPI func_exec_timeout_win(LPVOID lpParam) {
+    ThreadInfo *ti = (ThreadInfo *)lpParam;
+    void *ctx_internl = NULL;
+    void **ctx = &ctx_internl;
+    TRY {
+        if (ti->test->setup) {
+            ti->test->setup(ctx);
+        }
+        if (ti->test->func) {
+            ti->test->func(ti->status_info, ctx);
+        }
+        if (ti->test->teardown) {
+            ti->test->teardown(ctx);
+        }
+        return 0;
+    }
+    EXCEPT {
+        ti->status_info->status = Crashed;
+        return 0;
+    }
+}
+
 void run_all_tests_win() {
     // Setup Printing End Column. Since we don't have ioctl in windows we need to use windows.h
     CONSOLE_SCREEN_BUFFER_INFO csbi;
@@ -346,57 +374,65 @@ void run_all_tests_win() {
             for (size_t idx = 0; idx < tv->len; ++idx) {
 
                 int padding = max_cols - strlen(tv->tests[idx].name);
-                string_append(output, "  🧪 %.*s ........", max_cols, tv->tests[idx].name);
+                string_append(output, "  %s 🧪 %.*s ........", tv->tests[idx].setup ? "⚙" : " ",
+                              max_cols, tv->tests[idx].name);
 
                 for (int i = 0; i < padding; ++i) {
                     string_append(output, ".");
                 }
                 struct timespec start, end;
                 timespec_get(&start, TIME_UTC);
-                TRY {
-                    StatusInfo tstatus = {
-                        .status = Success,
-                        .fail_msg = {0},
-                    };
-                    // alarm(20);
-                    void *ctx_internl = NULL;
-                    void **ctx = &ctx_internl;
-                    if (tv->tests[idx].setup) {
-                        tv->tests[idx].setup(ctx);
-                    }
-                    tv->tests[idx].func(&tstatus, ctx);
-                    if (tv->tests[idx].teardown) {
-                        tv->tests[idx].teardown(ctx);
-                    }
-                    timespec_get(&end, TIME_UTC);
-                    long elapsed_ms = (end.tv_sec - start.tv_sec) * 1000 +
-                                      (end.tv_nsec - start.tv_nsec) / 1000000;
-                    switch (tstatus.status) {
-                    case Success:
-                        string_append(output, " " GREEN "[PASSED, %ldms]" RESET "\n", elapsed_ms);
-                        passed += 1;
-                        break;
-                    case Fail:
-                        string_append(output, " " RED "[FAILED, %ldms]" RESET "\n\t  > %s\n\n",
-                                      elapsed_ms, tstatus.fail_msg);
-                        failed += 1;
-                        break;
-                    case Skip:
-                        string_append(output, " " YELLOW "[SKIPPED, ⏭ ]" RESET "\n");
-                        skipped += 1;
-                        break;
-                    case Timeout:
-                        string_append(output, " " GREY "[TIMEOUT, ⧖ ]" RESET "\n");
-                        timeout += 1;
-                        break;
-                    default:
-                        assert(0 && "Unreachable");
-                    };
+                StatusInfo tstatus = {
+                    .fail_msg = {0},
+                    .status = Success,
+                };
+
+                // spawn a thread to run the test
+                ThreadInfo tinfo = {
+                    .test = &tv->tests[idx],
+                    .status_info = &tstatus,
+                };
+                HANDLE thread = CreateThread(NULL, 0, func_exec_timeout_win, &tinfo, 0, NULL);
+                if (thread == NULL) {
+                    perror("Failed to create thread");
+                    exit(EXIT_FAILURE);
                 }
-                EXCEPT {
+                // wait for the thread to finish with a timeout
+                DWORD wait_result = WaitForSingleObject(thread, 20000);
+                if (wait_result == WAIT_TIMEOUT) {
+                    tstatus.status = Timeout;
+                } else if (wait_result == WAIT_FAILED) {
+                    tstatus.status = Crashed;
+                }
+                timespec_get(&end, TIME_UTC);
+                long elapsed_ms =
+                    (end.tv_sec - start.tv_sec) * 1000 + (end.tv_nsec - start.tv_nsec) / 1000000;
+                switch (tstatus.status) {
+                case Success:
+                    string_append(output, " " GREEN "[PASSED, %ldms]" RESET "\n", elapsed_ms);
+                    passed += 1;
+                    break;
+                case Fail:
+                    string_append(output, " " RED "[FAILED, %ldms]" RESET "\n\t  > %s\n\n",
+                                  elapsed_ms, tstatus.fail_msg);
+                    failed += 1;
+                    break;
+                case Skip:
+                    string_append(output, " " YELLOW "[SKIPPED, ⏭ ]" RESET "\n");
+                    skipped += 1;
+                    break;
+                case Timeout:
+                    string_append(output, " " GREY "[TIMEOUT, ⧖ ]" RESET "\n");
+                    timeout += 1;
+                    break;
+                case Crashed:
                     string_append(output, " " MAGENTA "[CRASHED, ☠ ]" RESET "\n");
                     crashed += 1;
-                }
+                    break;
+                default:
+                    assert(0 && "Unreachable");
+                };
+                CloseHandle(thread);
                 fprintf(stderr, "%s", output->buf);
                 fflush(stderr);
                 string_rewind(output);
