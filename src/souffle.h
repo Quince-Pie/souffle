@@ -80,7 +80,7 @@ void err_print(StatusInfo *status_info, const char *file, int lineno, const char
     do {                                                                                           \
         if (a == NULL) {                                                                           \
             status_info->status = Fail;                                                            \
-            LOG_FAIL("\n\t  >> Expected: \"not NULL\"\n\t  >> Got: \"%p\"", (void *)a);            \
+            LOG_FAIL("\n\t  >> Expected: \"NOT NULL\"\n\t  >> Got: \"NULL\"");                     \
             return;                                                                                \
         }                                                                                          \
     } while (0)
