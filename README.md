@@ -7,7 +7,7 @@ There are few rough edges and tweaks that are necessary for this library to be c
 
 ### Why Yet Another C Test Framework
 
-There are many C Test Frameworks out there which are well respected and used by many open source projects. 
+There are many C Test Frameworks out there which are well respected and used by many open source projects.
 
 However, after viewing the majority of them, I found them to lack simplicity and tend to add unneccessary friction to the developer.
 
@@ -24,6 +24,61 @@ Souffle aims to be simple and easy to use while offering as much helpful feature
   - All assert functions check for type mismatch at compile time.
 5. Easy to integrate with your project (with and without build system).
 6. Works on modern C2x/C23 compilers and systems.
+
+
+
+### Example Output
+
+<pre><code>
+=== Test Run Started ===
+____________________________________________________________________________
+
+Running 13 tests in 4 suites
+____________________________________________________________________________
+
+⣿ Suite: EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE            ⣿
+    🧪 EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE ...... <span style="color: #00aa00">[PASSED, 0ms]</span>
+
+⣿ Suite: main_suite                                                        ⣿
+  ⚙ 🧪 TestCase1 ............................................. <span style="color: #00aa00">[PASSED, 0ms]</span>
+    🧪 test_number_eq ........................................ <span style="color: #aa0000">[FAILED, 0ms]</span>
+	  &gt; [<span style="text-decoration: underline">examples/basic.c:27</span>]: 
+	  &gt;&gt; Expected: "5"
+	  &gt;&gt; Got: "1"
+
+    🧪 exception_test ........................................ <span style="color: #E850A8">[CRASHED, ☠ ]</span>
+    🧪 pass .................................................. <span style="color: #00aa00">[PASSED, 0ms]</span>
+    🧪 pass_fail_pass ........................................ <span style="color: #aa0000">[FAILED, 0ms]</span>
+	  &gt; [<span style="text-decoration: underline">examples/basic.c:43</span>]: 
+	  &gt;&gt; Expected: "2"
+	  &gt;&gt; Got: "1"
+
+    🧪 float_check ........................................... <span style="color: #aa0000">[FAILED, 0ms]</span>
+	  &gt; [<span style="text-decoration: underline">examples/basic.c:47</span>]: 
+	  &gt;&gt; Expected: "1.500000"
+	  &gt;&gt; Got: "2.500000"
+
+    🧪 pass_fail ............................................. <span style="color: #aa0000">[FAILED, 0ms]</span>
+	  &gt; [<span style="text-decoration: underline">examples/basic.c:51</span>]: 
+	  &gt;&gt; Expected: "2"
+	  &gt;&gt; Got: "1"
+
+    🧪 skip_me ............................................... <span style="color: #aa5500">[SKIPPED, ⏭ ]</span>
+    🧪 long_test ............................................. <span style="color: #00aa00">[PASSED, 3000ms]</span>
+    🧪 timeout_test .......................................... <span style="color: #7f7f7f">[TIMEOUT, ⧖ ]</span>
+
+⣿ Suite: arr_suite                                                         ⣿
+    🧪 array_check ........................................... <span style="color: #00aa00">[PASSED, 0ms]</span>
+
+⣿ Suite: suite_2                                                           ⣿
+    🧪 is_true ............................................... <span style="color: #00aa00">[PASSED, 0ms]</span>
+
+____________________________________________________________________________
+=== Test Run Summary ===
+Total Tests: 13 | <span style="color: #00aa00">Passed</span>: 6 | <span style="color: #aa0000">Failed</span>: 4 | <span style="color: #E850A8">Crashed</span>: 1 | <span style="color: #aa5500">Skipped</span>: 1 | <span style="color: #7f7f7f">Timeout</span>: 1
+____________________________________________________________________________
+</code>
+</pre>
 
 
 ### Build from Source
@@ -75,7 +130,7 @@ checks: expected == actual
 
 Used for generic assertions for various basic types such as int and floats. This function includes a static assertion for a type check, so your types must be matching or casted correctly.
 
- 
+
 ##### `ASSERT_NE(expected, actual)`
 
 checks: expected != actual
