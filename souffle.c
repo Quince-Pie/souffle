@@ -189,9 +189,9 @@ void run_all_tests() {
 
     // Result Header
     string_append(output, "=== Test Run Started ===\n");
-    string_append(output, "%s\n\n", DASHES);
+    string_append(output, "%.*s\n\n", max_cols, DASHES);
     string_append(output, "Running %zu tests in %d suites\n", tcount, scount);
-    string_append(output, "%s\n", DASHES);
+    string_append(output, "%.*s\n", max_cols, DASHES);
 
     int passed = 0;
     int failed = 0;
@@ -297,14 +297,14 @@ void run_all_tests() {
     }
 
     kh_destroy(str_map, test_suites);
-    string_append(output, "\n%s\n", DASHES);
+    string_append(output, "\n%.*s\n", max_cols, DASHES);
     string_append(output, "=== Test Run Summary ===\n");
     string_append(output,
                   "Total Tests: %zu | " GREEN "Passed" RESET ": %d | " RED "Failed" RESET
                   ": %d | " MAGENTA "Crashed" RESET ": %d | " YELLOW "Skipped" RESET ": %d | " GREY
                   "Timeout" RESET ": %d\n",
                   tcount, passed, failed, crashed, skipped, timeout);
-    string_append(output, "%s\n", DASHES);
+    string_append(output, "%.*s\n",max_cols, DASHES);
     fprintf(stderr, "%s", output->buf);
     string_free(output);
 }
