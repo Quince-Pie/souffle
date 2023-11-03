@@ -71,7 +71,7 @@ void err_print(StatusInfo *status_info, const char *file, int lineno, const char
     do {                                                                                           \
         if (a != NULL) {                                                                           \
             status_info->status = Fail;                                                            \
-            LOG_FAIL("\n\t  >> Expected: \"NULL\"\n\t  >> Got: \"%p\"", a);                        \
+            LOG_FAIL("\n\t  >> Expected: \"NULL\"\n\t  >> Got: \"%p\"", (void *)a);                \
             return;                                                                                \
         }                                                                                          \
     } while (0)
@@ -80,7 +80,7 @@ void err_print(StatusInfo *status_info, const char *file, int lineno, const char
     do {                                                                                           \
         if (a == NULL) {                                                                           \
             status_info->status = Fail;                                                            \
-            LOG_FAIL("\n\t  >> Expected: \"not NULL\"\n\t  >> Got: \"%p\"", a);                    \
+            LOG_FAIL("\n\t  >> Expected: \"not NULL\"\n\t  >> Got: \"%p\"", (void *)a);            \
             return;                                                                                \
         }                                                                                          \
     } while (0)
@@ -207,11 +207,13 @@ int run_all_tests();
 #define TEST(suite, name)                                                                          \
     SETUP(suite, name);                                                                            \
     TEARDOWN(suite, name);                                                                         \
-    void suite##_##name(StatusInfo *status_info, void **ctx);                                      \
+    void suite##_##name(StatusInfo *status_info __attribute__((unused)),                           \
+                        void **ctx __attribute__((unused)));                                       \
     __attribute__((constructor)) void reg_##suite##_##name() {                                     \
         register_test(#suite, #name, suite##_##name, suite##_##name##_setup,                       \
                       suite##_##name##_teardown);                                                  \
     }                                                                                              \
-    void suite##_##name(StatusInfo *status_info, void **ctx)
+    void suite##_##name(StatusInfo *status_info __attribute__((unused)),                           \
+                        void **ctx __attribute__((unused)))
 
 #endif // SOUFFLE_H

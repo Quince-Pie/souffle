@@ -6,7 +6,7 @@
 #include <stdbool.h>
 #endif
 // !!!! The only needed header here. !!!!
-#include "../souffle.h"
+#include "../src/souffle.h"
 SETUP(MySuite, TestCase1) {
     int *data = malloc(sizeof(int));
     assert(data);

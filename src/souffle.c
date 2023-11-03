@@ -65,7 +65,7 @@ void string_append(String *str, const char *fmt, ...) PRINTF(2);
 void string_append(String *str, const char *fmt, ...) {
     va_list args;
     va_start(args, fmt);
-    int size_needed = vsnprintf(NULL, 0, fmt, args);
+    size_t size_needed = vsnprintf(NULL, 0, fmt, args);
     va_end(args);
 
     va_start(args, fmt);
@@ -174,7 +174,8 @@ void alarm_setup() {
 }
 
 int run_all_tests() {
-    int timeout_time = getenv("SOUFFLE_TIMEOUT") ? atoi(getenv("SOUFFLE_TIMEOUT")) : 20;
+    const char *timeout_str = getenv("SOUFFLE_TIMEOUT");
+    volatile int timeout_time = timeout_str ? atoi(timeout_str) : 20;
     if (timeout_time == 0) {
         timeout_time = 20;
     }
@@ -212,7 +213,7 @@ int run_all_tests() {
                 spaces_required = 0;
             string_append(output, "\n⣿ Suite: %.*s %*s⣿\n", max_cols - 11, suite_name,
                           spaces_required, "");
-            for (size_t idx = 0; idx < tv->len; ++idx) {
+            for (volatile size_t idx = 0; idx < tv->len; ++idx) {
                 int padding = max_cols - strlen(tv->tests[idx].name) - 28;
                 string_append(output, "  %s 🧪 %.*s ......", tv->tests[idx].setup ? "⚙" : " ",
                               max_cols - 28, tv->tests[idx].name);
