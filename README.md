@@ -94,7 +94,7 @@ ____________________________________________________________________________
 To build Souffle, simply create your test file and add souffle.c next to it when compiling.
 
 ```sh
-  $ gcc examples/basic.c souffle.c -g
+  $ gcc examples/basic.c souffle.c -g    # Optional: -DSOUFFLE_NOCOLOR to disable color output
 ```
 
 ### Documentation

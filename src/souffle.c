@@ -20,6 +20,7 @@
 #include "souffle.h"
 #include "stdlib.h"
 
+#ifndef SOUFFLE_NOCOLOR
 #define UNDERLINED "\033[4m"
 #define GREEN "\033[0;32m"
 #define RED "\033[0;31m"
@@ -27,6 +28,15 @@
 #define YELLOW "\033[0;33m"
 #define GREY "\033[90m"
 #define RESET "\033[0m"
+#else
+#define UNDERLINED ""
+#define GREEN ""
+#define RED ""
+#define MAGENTA ""
+#define YELLOW ""
+#define GREY ""
+#define RESET ""
+#endif
 
 // Separator
 static const char *DASHES =
