@@ -184,6 +184,11 @@ checks if val is NOT null.
 
 
 
+##### `SKIP_TEST()`
+
+Can be used to skip the test at any time (unless a failure happens before it).
+
+
 #### Meson Integration
 
 Souffle can be used with and without a build system.
