@@ -44,24 +44,24 @@ ____________________________________________________________________________
 ⣿ Suite: main_suite                                                        ⣿
   ⚙ 🧪 TestCase1 ............................................. <span style="color: #00aa00">[PASSED, 0ms]</span>
     🧪 test_number_eq ........................................ <span style="color: #aa0000">[FAILED, 0ms]</span>
-	  &gt; [<span style="text-decoration: underline">examples/basic.c:27</span>]: 
+	  &gt; [<span style="text-decoration: underline">examples/basic.c:27</span>]:
 	  &gt;&gt; Expected: "5"
 	  &gt;&gt; Got: "1"
 
     🧪 exception_test ........................................ <span style="color: #E850A8">[CRASHED, ☠ ]</span>
     🧪 pass .................................................. <span style="color: #00aa00">[PASSED, 0ms]</span>
     🧪 pass_fail_pass ........................................ <span style="color: #aa0000">[FAILED, 0ms]</span>
-	  &gt; [<span style="text-decoration: underline">examples/basic.c:43</span>]: 
+	  &gt; [<span style="text-decoration: underline">examples/basic.c:43</span>]:
 	  &gt;&gt; Expected: "2"
 	  &gt;&gt; Got: "1"
 
     🧪 float_check ........................................... <span style="color: #aa0000">[FAILED, 0ms]</span>
-	  &gt; [<span style="text-decoration: underline">examples/basic.c:47</span>]: 
+	  &gt; [<span style="text-decoration: underline">examples/basic.c:47</span>]:
 	  &gt;&gt; Expected: "1.500000"
 	  &gt;&gt; Got: "2.500000"
 
     🧪 pass_fail ............................................. <span style="color: #aa0000">[FAILED, 0ms]</span>
-	  &gt; [<span style="text-decoration: underline">examples/basic.c:51</span>]: 
+	  &gt; [<span style="text-decoration: underline">examples/basic.c:51</span>]:
 	  &gt;&gt; Expected: "2"
 	  &gt;&gt; Got: "1"
 
@@ -170,3 +170,42 @@ checks if val is null.
 ##### `ASSERT_NOT_NULL(val)`
 
 checks if val is NOT null.
+
+
+
+#### Meson Integration
+
+Souffle can be used with and without a build system.
+To use Souffle inside your meson project you can use the following:
+
+##### souffle.wrap:
+```ini
+[wrap-git]
+url = https://codeberg.org/QuincePie/souffle.git
+revision = head
+depth = 1
+clone-recursive = true
+
+[provide]
+souffle = souffle_dep
+```
+
+##### Your Meson.build:
+
+```meson
+project('meson_example', 'c',
+  version : '0.1',
+  default_options : ['warning_level=3', 'c_std=c2x'])
+
+
+souffle_dep = dependency('souffle',
+  # default_options: ['no_color=true'], # OPTIONAL: If you wish to disable color output.
+  fallback: ['souffle', 'souffle_dep'],
+)
+
+exe = executable('meson_example',
+   'meson_example.c',
+   dependencies: [souffle_dep])
+
+test('basic', exe)
+```

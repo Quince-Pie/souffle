@@ -1,0 +1,1 @@
+option('no_color', type: 'boolean', value: false, description: 'Disable Colors in Test Output')
