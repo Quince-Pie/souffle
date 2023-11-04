@@ -126,12 +126,25 @@ if your `SETUP` phase allocates or if you wish so clean up your test, `TEARDOWN`
 
 #### Assertions
 
+##### `ASSERT_FAIL(custom_msg)`
+
+Causes test to fail immediately with a custom error message.
+
+This can be useful for any user defined assertion.
+
+##### `ASSERT_TRUE(expected)`
+
+checks: expected == true
+
+##### `ASSERT_FALSE(expected)`
+
+checks: expected == false
+
 ##### `ASSERT_EQ(expected, actual)`
 
 checks: expected == actual
 
 Used for generic assertions for various basic types such as int and floats. This function includes a static assertion for a type check, so your types must be matching or casted correctly.
-
 
 ##### `ASSERT_NE(expected, actual)`
 
@@ -160,8 +173,6 @@ Used for generic assertions for various basic types such as int and floats. This
 This assertion currently fails immediately on the first mismatch.
 
 (*NOTE: This behavior may change in the future)
-
-
 
 ##### `ASSERT_NULL(val)`
 
