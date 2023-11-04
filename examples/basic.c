@@ -91,3 +91,5 @@ TEST(main_suite, timeout_test) {
 }
 
 TEST(suite_2, is_true) { ASSERT_TRUE(true); }
+
+TEST(main_suite, string_test) { ASSERT_STR_EQ("Hello, World", "Hello World!"); }

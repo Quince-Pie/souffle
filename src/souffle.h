@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 enum Status {
     Success,
@@ -17,7 +18,8 @@ enum Status {
 
 typedef struct StatusInfo {
     enum Status status;
-    char fail_msg[128];
+    int len;
+    char *fail_msg;
 } StatusInfo;
 
 // Utility macro: Make sure the function is only used the same way as printf
@@ -167,6 +169,24 @@ void err_print(StatusInfo *status_info, const char *file, int lineno, const char
                          i, a[i], #arr1, i, b[i]);                                                 \
                 return;                                                                            \
             }                                                                                      \
+        }                                                                                          \
+    } while (0)
+
+#define ASSERT_STR_EQ(str1, str2)                                                                  \
+    do {                                                                                           \
+        if (strcmp(str1, str2) != 0) {                                                             \
+            status_info->status = Fail;                                                            \
+            LOG_FAIL("\n\t  >> Expected: \"%s\"\n\t  >> Got: \"%s\"", str1, str2);                 \
+            return;                                                                                \
+        }                                                                                          \
+    } while (0)
+
+#define ASSERT_STR_NE(str1, str2)                                                                  \
+    do {                                                                                           \
+        if (strcmp(str1, str2) == 0) {                                                             \
+            status_info->status = Fail;                                                            \
+            LOG_FAIL("\n\t  >> Expected: \"%s\"\n\t  >> Got: \"%s\"", str1, str2);                 \
+            return;                                                                                \
         }                                                                                          \
     } while (0)
 

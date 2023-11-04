@@ -127,10 +127,18 @@ static void test_vec_push(TestsVec *tv, Test t) {
 void err_print(StatusInfo *status_info, const char *file, int lineno, const char *fmt, ...) {
     va_list args;
     va_start(args, fmt);
-    int idx =
-        snprintf((status_info->fail_msg), 128, "[" UNDERLINED "%s:%d" RESET "]: ", file, lineno);
-    idx += vsnprintf(status_info->fail_msg + idx, 128, fmt, args);
-    // Cleanup
+    int header_size = snprintf(NULL, 0, "[" UNDERLINED "%s:%d" RESET "]: ", file, lineno);
+    int content_size = vsnprintf(NULL, 0, fmt, args);
+    int size_needed = header_size + content_size + 1;
+    va_end(args);
+    va_start(args, fmt);
+
+    status_info->fail_msg = malloc(size_needed * sizeof(char));
+    assert(status_info->fail_msg);
+    status_info->len = snprintf(status_info->fail_msg, size_needed,
+                                "[" UNDERLINED "%s:%d" RESET "]: ", file, lineno);
+    status_info->len += vsnprintf(status_info->fail_msg + status_info->len,
+                                  size_needed - status_info->len, fmt, args);
     va_end(args);
 }
 
@@ -248,7 +256,8 @@ int run_all_tests() {
                     alarm_setup();
                     StatusInfo tstatus = {
                         .status = Success,
-                        .fail_msg = {0},
+                        .len = 0,
+                        .fail_msg = NULL, // allocated inside err_print
                     };
                     alarm(timeout_time);
                     void *ctx_internl = NULL;
@@ -260,11 +269,16 @@ int run_all_tests() {
                     if (tv->tests[idx].teardown) {
                         tv->tests[idx].teardown(ctx);
                     }
-                    int wret = write(pipefd[1], tstatus.fail_msg, 128);
-                    if (wret == -1) {
-                        perror("Failed to write to pipe");
+                    if (tstatus.status == Fail) {
+                        tstatus.len += 1;
+                        int wret = write(pipefd[1], &tstatus.len, sizeof(int));
+                        wret |= write(pipefd[1], tstatus.fail_msg, tstatus.len);
+                        if (wret == -1) {
+                            perror("Failed to write to pipe");
+                        }
                     }
                     close(pipefd[1]);
+                    free(tstatus.fail_msg);
                     exit(tstatus.status);
                 } else {
                     close(pipefd[1]);
@@ -274,12 +288,6 @@ int run_all_tests() {
                     timespec_get(&end, TIME_UTC);
                     long elapsed_ms = (end.tv_sec - start.tv_sec) * 1000 +
                                       (end.tv_nsec - start.tv_nsec) / 1000000;
-                    char buf[128] = {0};
-                    int rret = read(pipefd[0], buf, 128);
-                    if (rret == -1) {
-                        perror("Failed to read to pipe");
-                    }
-                    close(pipefd[0]);
                     if (WIFEXITED(status)) {
                         switch ((enum Status)WEXITSTATUS(status)) {
                         case Success:
@@ -287,11 +295,20 @@ int run_all_tests() {
                                           elapsed_ms);
                             passed += 1;
                             break;
-                        case Fail:
+                        case Fail: {
+                            int buf_size = 0;
+                            int rret = read(pipefd[0], &buf_size, sizeof(int));
+                            char *err_buf = malloc(buf_size * sizeof(char));
+                            rret = read(pipefd[0], err_buf, buf_size);
+                            if (rret == -1) {
+                                perror("Failed to read to pipe");
+                            }
                             string_append(output, " " RED "[FAILED, %ldms]" RESET "\n\t  > %s\n\n",
-                                          elapsed_ms, buf);
+                                          elapsed_ms, err_buf);
                             failed += 1;
+                            free(err_buf);
                             break;
+                        }
                         case Skip:
                             string_append(output, " " YELLOW "[SKIPPED, ⏭ ]" RESET "\n");
                             skipped += 1;
@@ -307,6 +324,7 @@ int run_all_tests() {
                         string_append(output, " " MAGENTA "[CRASHED, ☠ ]" RESET "\n");
                         crashed += 1;
                     }
+                    close(pipefd[0]);
                 }
             }
             test_vec_free(tv);
@@ -418,8 +436,9 @@ int run_all_tests_win() {
                 struct timespec start, end;
                 timespec_get(&start, TIME_UTC);
                 StatusInfo tstatus = {
-                    .fail_msg = {0},
                     .status = Success,
+                    .len = 0,
+                    .fail_msg = NULL,
                 };
 
                 // spawn a thread to run the test
@@ -451,6 +470,7 @@ int run_all_tests_win() {
                     string_append(output, " " RED "[FAILED, %ldms]" RESET "\n\t  > %s\n\n",
                                   elapsed_ms, tstatus.fail_msg);
                     failed += 1;
+                    free(tstatus.fail_msg);
                     break;
                 case Skip:
                     string_append(output, " " YELLOW "[SKIPPED, ⏭ ]" RESET "\n");
