@@ -65,7 +65,7 @@ TEST(
 
 TEST(arr_suite, array_check) {
     int a[3] = {1, 2, 3};
-    int b[3] = {1, 2, 3};
+    int b[3] = {1, 4, 3};
     ASSERT_ARR_EQ(a, b, 3);
 }
 TEST(main_suite, long_test) {

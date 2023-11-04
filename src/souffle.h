@@ -149,8 +149,8 @@ void err_print(StatusInfo *status_info, const char *file, int lineno, const char
         for (typeof(size) i = 0; i < size; ++i) {                                                  \
             if (((arr1)[i] != (arr2)[i])) {                                                        \
                 status_info->status = Fail;                                                        \
-                LOG_FAIL("\n\t  >> Expected: \"%d\"\n\t  >> Got: \"%d\" in Idx: %d", a[i], b[i],   \
-                         i);                                                                       \
+                LOG_FAIL("\n\t  >> Expected: %s[%d] = \"%d\"\n\t  >> Got: %s[%d] = \"%d\"", #arr1, \
+                         i, a[i], #arr1, i, b[i]);                                                 \
                 return;                                                                            \
             }                                                                                      \
         }                                                                                          \
@@ -163,8 +163,8 @@ void err_print(StatusInfo *status_info, const char *file, int lineno, const char
         for (typeof(size) i = 0; i < size; ++i) {                                                  \
             if (((arr1)[i] == (arr2)[i])) {                                                        \
                 status_info->status = Fail;                                                        \
-                LOG_FAIL("\n\t  >> Expected: \"%d\"\n\t  >> Got: \"%d\" in Idx: %d", a[i], b[i],   \
-                         i);                                                                       \
+                LOG_FAIL("\n\t  >> Expected: %s[%d] = \"%d\"\n\t  >> Got: %s[%d] = \"%d\"", #arr1, \
+                         i, a[i], #arr1, i, b[i]);                                                 \
                 return;                                                                            \
             }                                                                                      \
         }                                                                                          \
