@@ -41,11 +41,28 @@ void err_print(StatusInfo *status_info, const char *file, int lineno, const char
 #define ISFLOAT(x) _Generic((x), float: true, double: true, long double: true, default: false)
 // ---------------- ASSERTIONS ----------------
 
+// Intentional Fail with a message
+#define ASSERT_FAIL(fmt, ...)                                                                      \
+    do {                                                                                           \
+        status_info->status = Fail;                                                                \
+        LOG_FAIL(fmt, ##__VA_ARGS__);                                                              \
+        return;                                                                                    \
+    } while (0)
+
 #define ASSERT_TRUE(cond)                                                                          \
     do {                                                                                           \
         if (!cond) {                                                                               \
             status_info->status = Fail;                                                            \
             LOG_FAIL("\n\t  >> Expected: \"true\"\n\t  >> Got: \"%s\"", #cond);                    \
+            return;                                                                                \
+        }                                                                                          \
+    } while (0)
+
+#define ASSERT_FALSE(cond)                                                                         \
+    do {                                                                                           \
+        if (cond) {                                                                                \
+            status_info->status = Fail;                                                            \
+            LOG_FAIL("\n\t  >> Expected: \"false\"\n\t  >> Got: \"%s\"", #cond);                   \
             return;                                                                                \
         }                                                                                          \
     } while (0)
