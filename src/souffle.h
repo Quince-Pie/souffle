@@ -86,6 +86,26 @@ void err_print(StatusInfo *status_info, const char *file, int lineno, const char
         }                                                                                          \
     } while (0)
 
+#define ASSERT_PTR_EQ(a, b)                                                                        \
+    do {                                                                                           \
+        static_assert(_Generic((a), typeof(b): 1, default: 0), "Type mismatch");                   \
+        if (a != b) {                                                                              \
+            status_info->status = Fail;                                                            \
+            LOG_FAIL("\n\t  >> Expected: \"%p\"\n\t  >> Got: \"%p\"", (void *)a, (void *)b);       \
+            return;                                                                                \
+        }                                                                                          \
+    } while (0)
+
+#define ASSERT_PTR_NE(a, b)                                                                        \
+    do {                                                                                           \
+        static_assert(_Generic((a), typeof(b): 1, default: 0), "Type mismatch");                   \
+        if (a == b) {                                                                              \
+            status_info->status = Fail;                                                            \
+            LOG_FAIL("\n\t  >> Expected: \"%p\"\n\t  >> Got: \"%p\"", (void *)a, (void *)b);       \
+            return;                                                                                \
+        }                                                                                          \
+    } while (0)
+
 #define ASSERT_NULL(a)                                                                             \
     do {                                                                                           \
         if (a != NULL) {                                                                           \
@@ -142,10 +162,48 @@ void err_print(StatusInfo *status_info, const char *file, int lineno, const char
         }                                                                                          \
     } while (0)
 
+#define ASSERT_LTE(a, b)                                                                           \
+    do {                                                                                           \
+        static_assert(_Generic((a), typeof(b): 1, default: 0), "Type mismatch");                   \
+        if (a > b) {                                                                               \
+            status_info->status = Fail;                                                            \
+            if (ISFLOAT(a)) {                                                                      \
+                LOG_FAIL("\n\t  >> Expected: \"%Lf\"\n\t  >> Got: \"%Lf\"", (long double)a,        \
+                         (long double)b);                                                          \
+            } else if (ISUNSIGNED(a)) {                                                            \
+                LOG_FAIL("\n\t  >> Expected: \"%zu\"\n\t  >> Got: \"%zu\"", (uintmax_t)a,          \
+                         (uintmax_t)b);                                                            \
+            } else {                                                                               \
+                LOG_FAIL("\n\t  >> Expected: \"%zd\"\n\t  >> Got: \"%zd\"", (intmax_t)a,           \
+                         (intmax_t)b);                                                             \
+            }                                                                                      \
+            return;                                                                                \
+        }                                                                                          \
+    } while (0)
+
 #define ASSERT_GT(a, b)                                                                            \
     do {                                                                                           \
         static_assert(_Generic((a), typeof(b): 1, default: 0), "Type mismatch");                   \
         if (a <= b) {                                                                              \
+            status_info->status = Fail;                                                            \
+            if (ISFLOAT(a)) {                                                                      \
+                LOG_FAIL("\n\t  >> Expected: \"%Lf\"\n\t  >> Got: \"%Lf\"", (long double)a,        \
+                         (long double)b);                                                          \
+            } else if (ISUNSIGNED(a)) {                                                            \
+                LOG_FAIL("\n\t  >> Expected: \"%zu\"\n\t  >> Got: \"%zu\"", (uintmax_t)a,          \
+                         (uintmax_t)b);                                                            \
+            } else {                                                                               \
+                LOG_FAIL("\n\t  >> Expected: \"%zd\"\n\t  >> Got: \"%zd\"", (intmax_t)a,           \
+                         (intmax_t)b);                                                             \
+            }                                                                                      \
+            return;                                                                                \
+        }                                                                                          \
+    } while (0)
+
+#define ASSERT_GTE(a, b)                                                                           \
+    do {                                                                                           \
+        static_assert(_Generic((a), typeof(b): 1, default: 0), "Type mismatch");                   \
+        if (a < b) {                                                                               \
             status_info->status = Fail;                                                            \
             if (ISFLOAT(a)) {                                                                      \
                 LOG_FAIL("\n\t  >> Expected: \"%Lf\"\n\t  >> Got: \"%Lf\"", (long double)a,        \
@@ -168,10 +226,22 @@ void err_print(StatusInfo *status_info, const char *file, int lineno, const char
         for (typeof(size) i = 0; i < size; ++i) {                                                  \
             if (((arr1)[i] != (arr2)[i])) {                                                        \
                 status_info->status = Fail;                                                        \
-                LOG_FAIL("\n\t  >> Expected: %s[%d] = \"%d\"\n\t  >> Got: %s[%d] = \"%d\"", #arr1, \
-                         i, a[i], #arr1, i, b[i]);                                                 \
-                return;                                                                            \
+                break;                                                                             \
             }                                                                                      \
+        }                                                                                          \
+        if (status_info->status == Fail) {                                                         \
+            status_info->fail_msg = malloc(64 + size * 4);                                         \
+            LOG_FAIL("\n\t  >> Expected: [ %d", arr1[0]);                                          \
+            for (typeof(size) i = 1; i < size; ++i) {                                              \
+                LOG_FAIL(", %d", arr1[i]);                                                         \
+            }                                                                                      \
+            LOG_FAIL(" ]");                                                                        \
+            LOG_FAIL("\n\t  >> Got: [ %d", arr2[0]);                                               \
+            for (typeof(size) i = 1; i < size; ++i) {                                              \
+                LOG_FAIL(", %d", arr2[i]);                                                         \
+            }                                                                                      \
+            LOG_FAIL(" ]");                                                                        \
+            return;                                                                                \
         }                                                                                          \
     } while (0)
 
@@ -182,10 +252,22 @@ void err_print(StatusInfo *status_info, const char *file, int lineno, const char
         for (typeof(size) i = 0; i < size; ++i) {                                                  \
             if (((arr1)[i] == (arr2)[i])) {                                                        \
                 status_info->status = Fail;                                                        \
-                LOG_FAIL("\n\t  >> Expected: %s[%d] = \"%d\"\n\t  >> Got: %s[%d] = \"%d\"", #arr1, \
-                         i, a[i], #arr1, i, b[i]);                                                 \
-                return;                                                                            \
+                break;                                                                             \
             }                                                                                      \
+        }                                                                                          \
+        if (status_info->status == Fail) {                                                         \
+            status_info->fail_msg = malloc(64 + size * 4);                                         \
+            LOG_FAIL("\n\t  >> Expected: [ %d", arr1[0]);                                          \
+            for (typeof(size) i = 1; i < size; ++i) {                                              \
+                LOG_FAIL(", %d", arr1[i]);                                                         \
+            }                                                                                      \
+            LOG_FAIL(" ]");                                                                        \
+            LOG_FAIL("\n\t  >> Got: [ %d", arr2[0]);                                               \
+            for (typeof(size) i = 1; i < size; ++i) {                                              \
+                LOG_FAIL(", %d", arr2[i]);                                                         \
+            }                                                                                      \
+            LOG_FAIL(" ]");                                                                        \
+            return;                                                                                \
         }                                                                                          \
     } while (0)
 

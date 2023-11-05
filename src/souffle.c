@@ -52,6 +52,7 @@ static String *string_init() {
     String *str = malloc(sizeof(String));
     assert(str);
     str->buf = malloc(1024 * sizeof(char));
+    assert(str->buf);
     str->capacity = 1024;
     str->len = 0;
     return str;
@@ -127,13 +128,21 @@ static void test_vec_push(TestsVec *tv, Test t) {
 void err_print(StatusInfo *status_info, const char *file, int lineno, const char *fmt, ...) {
     va_list args;
     va_start(args, fmt);
+    if (status_info->len != 0) {
+        // in case of continous output where allocation is done upfront (e.g., array assertions)
+        // INT_MAX is used here because we are sure we allocated enough.
+        status_info->len += vsnprintf(status_info->fail_msg + status_info->len, INT_MAX, fmt, args);
+        va_end(args);
+        return;
+    }
     int header_size = snprintf(NULL, 0, "[" UNDERLINED "%s:%d" RESET "]: ", file, lineno);
     int content_size = vsnprintf(NULL, 0, fmt, args);
     int size_needed = header_size + content_size + 1;
     va_end(args);
     va_start(args, fmt);
-
-    status_info->fail_msg = malloc(size_needed * sizeof(char));
+    if (status_info->fail_msg == NULL) {
+        status_info->fail_msg = malloc(size_needed * sizeof(char));
+    }
     assert(status_info->fail_msg);
     status_info->len = snprintf(status_info->fail_msg, size_needed,
                                 "[" UNDERLINED "%s:%d" RESET "]: ", file, lineno);
