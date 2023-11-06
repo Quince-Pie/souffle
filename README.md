@@ -20,10 +20,8 @@ Souffle aims to be simple and easy to use while offering as much helpful feature
 1. Simple test declaration (No main function is needed).
 2. No setjmps / longjmps (vfork is utilized instead).
 3. Reasonably fast.
-4. Type checking assertions.
-  - All assert functions check for type mismatch at compile time.
-5. Easy to integrate with your project (with and without build system).
-6. Works on modern C2x/C23 compilers and systems.
+4. Easy to integrate with your project (with and without build system).
+5. Works on modern C2x/C23 compilers and systems.
 
 
 
@@ -35,21 +33,28 @@ Output of [examples/basic.c](examples/basic.c):
 === Test Run Started ===
 ____________________________________________________________________________
 
-Running 13 tests in 4 suites
+Running 15 tests in 4 suites
 ____________________________________________________________________________
 
 ⣿ Suite: EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE            ⣿
     🧪 EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE ...... <span style="color: #00aa00">[PASSED, 0ms]</span>
 
+
+
 ⣿ Suite: main_suite                                                        ⣿
   ⚙ 🧪 TestCase1 ............................................. <span style="color: #00aa00">[PASSED, 0ms]</span>
+
+
     🧪 test_number_eq ........................................ <span style="color: #aa0000">[FAILED, 0ms]</span>
 	  &gt; [<span style="text-decoration: underline">examples/basic.c:27</span>]:
 	  &gt;&gt; Expected: "5"
 	  &gt;&gt; Got: "1"
 
     🧪 exception_test ........................................ <span style="color: #E850A8">[CRASHED, ☠ ]</span>
+
     🧪 pass .................................................. <span style="color: #00aa00">[PASSED, 0ms]</span>
+
+
     🧪 pass_fail_pass ........................................ <span style="color: #aa0000">[FAILED, 0ms]</span>
 	  &gt; [<span style="text-decoration: underline">examples/basic.c:43</span>]:
 	  &gt;&gt; Expected: "2"
@@ -66,18 +71,38 @@ ____________________________________________________________________________
 	  &gt;&gt; Got: "1"
 
     🧪 skip_me ............................................... <span style="color: #aa5500">[SKIPPED, ⏭ ]</span>
+
+
     🧪 long_test ............................................. <span style="color: #00aa00">[PASSED, 3000ms]</span>
+
+
     🧪 timeout_test .......................................... <span style="color: #7f7f7f">[TIMEOUT, ⧖ ]</span>
 
+
+    🧪 string_test ........................................... <span style="color: #aa0000">[FAILED, 0ms]</span>
+	  &gt; [<span style="text-decoration: underline">examples/basic.c:96</span>]:
+	  &gt;&gt; Expected: "Hello, World"
+	  &gt;&gt; Got: "Hello World!"
+
+    🧪 log_on_pass ........................................... <span style="color: #00aa00">[PASSED, 0ms]</span>
+	  This is a log message
+
+
 ⣿ Suite: arr_suite                                                         ⣿
-    🧪 array_check ........................................... <span style="color: #00aa00">[PASSED, 0ms]</span>
+    🧪 array_check ........................................... <span style="color: #aa0000">[FAILED, 0ms]</span>
+	  &gt; [<span style="text-decoration: underline">examples/basic.c:69</span>]:
+	  &gt;&gt; Expected: [ 1, 2, 3 ]
+	  &gt;&gt; Got: [ 1, 4, 3 ]
+
 
 ⣿ Suite: suite_2                                                           ⣿
     🧪 is_true ............................................... <span style="color: #00aa00">[PASSED, 0ms]</span>
 
+
+
 ____________________________________________________________________________
 === Test Run Summary ===
-Total Tests: 13 | <span style="color: #00aa00">Passed</span>: 6 | <span style="color: #aa0000">Failed</span>: 4 | <span style="color: #E850A8">Crashed</span>: 1 | <span style="color: #aa5500">Skipped</span>: 1 | <span style="color: #7f7f7f">Timeout</span>: 1
+Total Tests: 15 | <span style="color: #00aa00">Passed</span>: 6 | <span style="color: #aa0000">Failed</span>: 6 | <span style="color: #E850A8">Crashed</span>: 1 | <span style="color: #aa5500">Skipped</span>: 1 | <span style="color: #7f7f7f">Timeout</span>: 1
 ____________________________________________________________________________
 </code>
 </pre>
@@ -126,12 +151,6 @@ if your `SETUP` phase allocates or if you wish so clean up your test, `TEARDOWN`
 
 #### Assertions
 
-##### `ASSERT_FAIL(custom_msg)`
-
-Causes test to fail immediately with a custom error message.
-
-This can be useful for any user defined assertion.
-
 ##### `ASSERT_TRUE(expected)`
 
 checks: expected == true
@@ -152,41 +171,103 @@ checks: expected != actual
 
 Used for generic assertions for various basic types such as int and floats. This function includes a static assertion for a type check, so your types must be matching or casted correctly.
 
-##### `ASSERT_GE(expected, actual)`
+##### `ASSERT_PTR_EQ(expected, actual)`
+
+checks if both pointers are equal, will output the location for both pointers on failure.
+
+##### `ASSERT_PTR_NE(expected, actual)`
+
+checks if both pointers are NOT equal, will output the location for both pointers on failure.
+
+##### `ASSERT_NULL(val)`
+
+checks: val == NULL.
+
+##### `ASSERT_NOT_NULL(val)`
+
+checks: val != NULL.
+
+##### `ASSERT_GT(expected, actual)`
+
+checks: expected > actual
+
+Used for generic assertions for various basic types such as int and floats. This function includes a static assertion for a type check, so your types must be matching or casted correctly.
+
+##### `ASSERT_LT(expected, actual)`
+
+checks: expected < actual
+
+Used for generic assertions for various basic types such as int and floats. This function includes a static assertion for a type check, so your types must be matching or casted correctly.
+
+##### `ASSERT_GTE(expected, actual)`
 
 checks: expected >= actual
 
 Used for generic assertions for various basic types such as int and floats. This function includes a static assertion for a type check, so your types must be matching or casted correctly.
 
-##### `ASSERT_LE(expected, actual)`
+##### `ASSERT_LTE(expected, actual)`
 
 checks: expected <= actual
 
 Used for generic assertions for various basic types such as int and floats. This function includes a static assertion for a type check, so your types must be matching or casted correctly.
 
-##### `ASSERT_ARR_EQ(expected, actual)`
+##### `ASSERT_UINT_ARR_EQ(expected, actual)`
 
-checks: expected == actual for every element in the array.
+checks: expected == actual for every element in the array (any unsigned type).
 
 Used for generic assertions for various basic types such as int and floats. This function includes a static assertion for a type check on the first element, so your types must be matching or casted correctly.
 
-This assertion currently fails immediately on the first mismatch.
+This assertion will print both arrays on failure.
 
-(*NOTE: This behavior may change in the future)
+##### `ASSERT_INT_ARR_EQ(expected, actual)`
 
-##### `ASSERT_NULL(val)`
+checks: expected == actual for every element in the array (any signed type).
 
-checks if val is null.
+Used for generic assertions for various basic types such as int and floats. This function includes a static assertion for a type check on the first element, so your types must be matching or casted correctly.
 
-##### `ASSERT_NOT_NULL(val)`
+This assertion will print both arrays on failure.
 
-checks if val is NOT null.
+##### `ASSERT_FLOAT_ARR_EQ(expected, actual)`
 
+checks: expected == actual for every element in the array (any float type).
+
+Used for generic assertions for various basic types such as int and floats. This function includes a static assertion for a type check on the first element, so your types must be matching or casted correctly.
+
+This assertion will print both arrays on failure.
+
+
+##### `ASSERT_STR_EQ(str1, str2)`
+
+checks: if both strings are equal.
+
+This assertion will print both values on failure.
+
+##### `ASSERT_STR_NE(str1, str2)`
+
+checks: if both strings are NOT equal.
+
+This assertion will print both values on failure.
+
+
+
+#### Utility Functions
+
+##### `LOG_MSG(msg, args)`
+
+Can be used to log any message (this function should be used instead of printf for the test).
+
+##### `LOG_TRACE_MSG(msg, args)`
+
+Can be used to log any message with a trace header (file:line).
 
 
 ##### `SKIP_TEST()`
 
 Can be used to skip the test at any time (unless a failure happens before it).
+
+##### `FAIL_TEST()`
+
+Causes the test to fail immediately. This can be helpful for creating a custom assertion when used with LOG_MSG() and LOG_TRACE_MSG().
 
 
 #### Meson Integration
