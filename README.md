@@ -1,10 +1,5 @@
 # Souffle: A C Test Framework
 
-#### Warning: This Library is Currently a Work in Progress (WIP)
-
-There are few rough edges and tweaks that are necessary for this library to be considered stable.
-
-
 ### Why Yet Another C Test Framework
 
 There are many C Test Frameworks out there which are well respected and used by many open source projects.
@@ -122,6 +117,45 @@ To build Souffle, simply create your test file and add souffle.c next to it when
   $ gcc examples/basic.c souffle.c -g    # Optional: -DSOUFFLE_NOCOLOR to disable color output
 ```
 
+
+#### Meson Integration
+
+Souffle can be used with and without a build system.
+To use Souffle inside your meson project you can use the following:
+
+##### souffle.wrap:
+```ini
+[wrap-git]
+url = https://codeberg.org/QuincePie/souffle.git
+revision = head
+depth = 1
+clone-recursive = true
+
+[provide]
+souffle = souffle_dep
+```
+
+##### Your Meson.build:
+
+```meson
+project('meson_example', 'c',
+  version : '0.1',
+  default_options : ['warning_level=3', 'c_std=c2x'])
+
+
+souffle_dep = dependency('souffle',
+  # default_options: ['no_color=true'], # OPTIONAL: If you wish to disable color output.
+  fallback: ['souffle', 'souffle_dep'],
+)
+
+exe = executable('meson_example',
+   'meson_example.c',
+   dependencies: [souffle_dep])
+
+test('basic', exe)
+```
+
+
 ### Documentation
 
 Please view the examples under the examples folder for an example usage.
@@ -147,7 +181,7 @@ every `TEST` and `SETUP` provides `void **ctx` field that may freely use for con
 
 ##### `TEARDOWN(suite, test_name)`
 
-if your `SETUP` phase allocates or if you wish so clean up your test, `TEARDOWN` is used to define how you would teardown your setup/test.
+if your `SETUP` phase allocates or if you wish to clean up your test, `TEARDOWN` is used to define how you would teardown your setup/test.
 
 #### Assertions
 
@@ -269,40 +303,3 @@ Can be used to skip the test at any time (unless a failure happens before it).
 
 Causes the test to fail immediately. This can be helpful for creating a custom assertion when used with LOG_MSG() and LOG_TRACE_MSG().
 
-
-#### Meson Integration
-
-Souffle can be used with and without a build system.
-To use Souffle inside your meson project you can use the following:
-
-##### souffle.wrap:
-```ini
-[wrap-git]
-url = https://codeberg.org/QuincePie/souffle.git
-revision = head
-depth = 1
-clone-recursive = true
-
-[provide]
-souffle = souffle_dep
-```
-
-##### Your Meson.build:
-
-```meson
-project('meson_example', 'c',
-  version : '0.1',
-  default_options : ['warning_level=3', 'c_std=c2x'])
-
-
-souffle_dep = dependency('souffle',
-  # default_options: ['no_color=true'], # OPTIONAL: If you wish to disable color output.
-  fallback: ['souffle', 'souffle_dep'],
-)
-
-exe = executable('meson_example',
-   'meson_example.c',
-   dependencies: [souffle_dep])
-
-test('basic', exe)
-```
