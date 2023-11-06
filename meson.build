@@ -7,6 +7,11 @@ if get_option('no_color')
   add_project_arguments('-DSOUFFLE_NOCOLOR', language: 'c')
 endif
 
+
+if host_machine.system() == 'darwin'
+  add_project_arguments('-undefined', 'dynamic_lookup', language: 'c')
+endif
+
 souffle_srcs = files('src/souffle.c')
 souffle_inc = include_directories('src')
 

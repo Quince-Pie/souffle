@@ -107,6 +107,12 @@ To build Souffle, simply create your test file and add souffle.c next to it when
   $ gcc examples/basic.c souffle.c -g    # Optional: -DSOUFFLE_NOCOLOR to disable color output
 ```
 
+Darwin systems require additional linker flag due to the weak support to weak attributes in the linker.
+
+```sh
+  $ clang examples/basic.c souffle.c -g -undefined dynamic_lookup
+```
+
 
 #### Meson Integration
 
