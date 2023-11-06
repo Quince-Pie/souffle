@@ -66,8 +66,9 @@ TEST(
 TEST(arr_suite, array_check) {
     int a[3] = {1, 2, 3};
     int b[3] = {1, 4, 3};
-    ASSERT_ARR_EQ(a, b, 3);
+    ASSERT_INT_ARR_EQ(a, b, 3);
 }
+
 TEST(main_suite, long_test) {
     for (size_t i = 0; i < 3; i++) {
 #ifndef _WIN32
@@ -93,3 +94,8 @@ TEST(main_suite, timeout_test) {
 TEST(suite_2, is_true) { ASSERT_TRUE(true); }
 
 TEST(main_suite, string_test) { ASSERT_STR_EQ("Hello, World", "Hello World!"); }
+
+TEST(main_suite, log_on_pass) {
+    ASSERT_EQ(1, 1);
+    LOG_MSG("\t  This is a log message");
+}

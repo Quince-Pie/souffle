@@ -42,14 +42,8 @@
 static const char *DASHES =
     "_________________________________________________________________________________";
 
-typedef struct String {
-    char *buf;
-    size_t capacity;
-    size_t len;
-} String;
-
-static String *string_init() {
-    String *str = malloc(sizeof(String));
+static SouffleString *string_init() {
+    SouffleString *str = malloc(sizeof(SouffleString));
     assert(str);
     str->buf = malloc(1024 * sizeof(char));
     assert(str->buf);
@@ -58,22 +52,22 @@ static String *string_init() {
     return str;
 }
 
-static void string_free(String *str) {
+static void string_free(SouffleString *str) {
     free(str->buf);
     free(str);
 }
-static inline void string_rewind(String *str) {
+static inline void string_rewind(SouffleString *str) {
     str->len = 0;
     str->buf[0] = '\0';
 }
 // dump a string to stdout and rewind
-static inline void string_dump(String *str) {
+static inline void string_dump(SouffleString *str) {
     fprintf(stdout, "%s", str->buf);
     fflush(stdout);
     string_rewind(str);
 }
-void string_append(String *str, const char *fmt, ...) PRINTF(2);
-void string_append(String *str, const char *fmt, ...) {
+
+void string_append(SouffleString *str, const char *fmt, ...) {
     va_list args;
     va_start(args, fmt);
     size_t size_needed = vsnprintf(NULL, 0, fmt, args);
@@ -91,6 +85,45 @@ void string_append(String *str, const char *fmt, ...) {
     }
     str->len += vsnprintf(str->buf + str->len, str->capacity, fmt, args);
     // Cleanup
+    va_end(args);
+}
+
+static void string_append_va(SouffleString *str, const char *fmt, va_list args) {
+    va_list args_copy;
+    va_copy(args_copy, args);
+    size_t size_needed = vsnprintf(NULL, 0, fmt, args);
+    if (size_needed + 1 > str->capacity) {
+        string_dump(str);
+        free(str->buf);
+        str->capacity *= 2;
+        str->buf = malloc(str->capacity * sizeof(char));
+        assert(str->buf);
+    } else if (size_needed + 1 > str->capacity - str->len) {
+        string_dump(str);
+    }
+    str->len += vsnprintf(str->buf + str->len, str->capacity, fmt, args_copy);
+    va_end(args_copy);
+}
+
+void souffle_log_msg(StatusInfo *status_info, const char *file, int lineno, const char *fmt, ...) {
+    if (status_info->msg == NULL) {
+        status_info->msg = string_init();
+    }
+    string_append(status_info->msg, "\t  > [" UNDERLINED "%s:%d" RESET "]:", file, lineno);
+    string_append(status_info->msg, "\n\t  >> ");
+    va_list args;
+    va_start(args, fmt);
+    string_append_va(status_info->msg, fmt, args);
+    va_end(args);
+}
+
+void souffle_log_msg_raw(StatusInfo *status_info, const char *fmt, ...) {
+    if (status_info->msg == NULL) {
+        status_info->msg = string_init();
+    }
+    va_list args;
+    va_start(args, fmt);
+    string_append_va(status_info->msg, fmt, args);
     va_end(args);
 }
 
@@ -123,32 +156,6 @@ static void test_vec_push(TestsVec *tv, Test t) {
     tv->tests[tv->len] = t;
     tv->len++;
     return;
-}
-
-void err_print(StatusInfo *status_info, const char *file, int lineno, const char *fmt, ...) {
-    va_list args;
-    va_start(args, fmt);
-    if (status_info->len != 0) {
-        // in case of continous output where allocation is done upfront (e.g., array assertions)
-        // INT_MAX is used here because we are sure we allocated enough.
-        status_info->len += vsnprintf(status_info->fail_msg + status_info->len, INT_MAX, fmt, args);
-        va_end(args);
-        return;
-    }
-    int header_size = snprintf(NULL, 0, "[" UNDERLINED "%s:%d" RESET "]: ", file, lineno);
-    int content_size = vsnprintf(NULL, 0, fmt, args);
-    int size_needed = header_size + content_size + 1;
-    va_end(args);
-    va_start(args, fmt);
-    if (status_info->fail_msg == NULL) {
-        status_info->fail_msg = malloc(size_needed * sizeof(char));
-    }
-    assert(status_info->fail_msg);
-    status_info->len = snprintf(status_info->fail_msg, size_needed,
-                                "[" UNDERLINED "%s:%d" RESET "]: ", file, lineno);
-    status_info->len += vsnprintf(status_info->fail_msg + status_info->len,
-                                  size_needed - status_info->len, fmt, args);
-    va_end(args);
 }
 
 void register_test(const char *suite, const char *name, TestFunc func, SetupFunc setup,
@@ -215,7 +222,7 @@ int run_all_tests() {
     max_cols =
         largest_name < max_cols ? max_cols : (largest_name > cols - 4 ? cols - 4 : largest_name);
 
-    String *output = string_init();
+    SouffleString *output = string_init();
 
     assert(test_suites);
     khint_t scount = kh_size(test_suites);
@@ -265,8 +272,7 @@ int run_all_tests() {
                     alarm_setup();
                     StatusInfo tstatus = {
                         .status = Success,
-                        .len = 0,
-                        .fail_msg = NULL, // allocated inside err_print
+                        .msg = NULL,
                     };
                     alarm(timeout_time);
                     void *ctx_internl = NULL;
@@ -278,16 +284,17 @@ int run_all_tests() {
                     if (tv->tests[idx].teardown) {
                         tv->tests[idx].teardown(ctx);
                     }
-                    if (tstatus.status == Fail) {
-                        tstatus.len += 1;
-                        int wret = write(pipefd[1], &tstatus.len, sizeof(int));
-                        wret |= write(pipefd[1], tstatus.fail_msg, tstatus.len);
+                    if (tstatus.msg) {
+                        int wret = write(pipefd[1], &tstatus.msg->len, sizeof(int));
+                        wret |= write(pipefd[1], tstatus.msg->buf, tstatus.msg->len);
                         if (wret == -1) {
                             perror("Failed to write to pipe");
                         }
+                        string_free(tstatus.msg);
                     }
+
                     close(pipefd[1]);
-                    free(tstatus.fail_msg);
+
                     exit(tstatus.status);
                 } else {
                     close(pipefd[1]);
@@ -297,42 +304,45 @@ int run_all_tests() {
                     timespec_get(&end, TIME_UTC);
                     long elapsed_ms = (end.tv_sec - start.tv_sec) * 1000 +
                                       (end.tv_nsec - start.tv_nsec) / 1000000;
+                    int buf_size = 0;
+                    int rret = read(pipefd[0], &buf_size, sizeof(int));
+                    // calloc for the null terminator
+                    char *err_buf = buf_size ? calloc((buf_size + 1), sizeof(char)) : NULL;
+                    rret = read(pipefd[0], err_buf, buf_size);
+                    if (rret == -1) {
+                        perror("Failed to read to pipe");
+                    }
                     if (WIFEXITED(status)) {
                         switch ((enum Status)WEXITSTATUS(status)) {
                         case Success:
-                            string_append(output, " " GREEN "[PASSED, %ldms]" RESET "\n",
-                                          elapsed_ms);
+                            string_append(output, " " GREEN "[PASSED, %ldms]" RESET "\n%s\n\n",
+                                          elapsed_ms, err_buf ? err_buf : "");
                             passed += 1;
                             break;
                         case Fail: {
-                            int buf_size = 0;
-                            int rret = read(pipefd[0], &buf_size, sizeof(int));
-                            char *err_buf = malloc(buf_size * sizeof(char));
-                            rret = read(pipefd[0], err_buf, buf_size);
-                            if (rret == -1) {
-                                perror("Failed to read to pipe");
-                            }
-                            string_append(output, " " RED "[FAILED, %ldms]" RESET "\n\t  > %s\n\n",
-                                          elapsed_ms, err_buf);
+                            string_append(output, " " RED "[FAILED, %ldms]" RESET "\n%s\n\n",
+                                          elapsed_ms, err_buf ? err_buf : "");
                             failed += 1;
-                            free(err_buf);
                             break;
                         }
                         case Skip:
-                            string_append(output, " " YELLOW "[SKIPPED, ⏭ ]" RESET "\n");
+                            string_append(output, " " YELLOW "[SKIPPED, ⏭ ]" RESET "\n%s\n\n",
+                                          err_buf ? err_buf : "");
                             skipped += 1;
                             break;
                         case Timeout:
-                            string_append(output, " " GREY "[TIMEOUT, ⧖ ]" RESET "\n");
+                            string_append(output, " " GREY "[TIMEOUT, ⧖ ]" RESET "\n%s\n\n",
+                                          err_buf ? err_buf : "");
                             timeout += 1;
                             break;
                         default:
                             unreachable();
                         };
                     } else if (WIFSIGNALED(status)) {
-                        string_append(output, " " MAGENTA "[CRASHED, ☠ ]" RESET "\n");
+                        string_append(output, " " MAGENTA "[CRASHED, ☠ ]" RESET "\n\n");
                         crashed += 1;
                     }
+                    free(err_buf);
                     close(pipefd[0]);
                 }
             }
@@ -408,7 +418,8 @@ int run_all_tests_win() {
     int max_cols = cols > 53 ? 53 : cols;
     max_cols =
         largest_name < max_cols ? max_cols : (largest_name > cols - 4 ? cols - 4 : largest_name);
-    String *output = string_init();
+
+    SouffleString *output = string_init();
 
     assert(test_suites);
     // Result Header
@@ -446,8 +457,7 @@ int run_all_tests_win() {
                 timespec_get(&start, TIME_UTC);
                 StatusInfo tstatus = {
                     .status = Success,
-                    .len = 0,
-                    .fail_msg = NULL,
+                    .msg = NULL,
                 };
 
                 // spawn a thread to run the test
@@ -470,23 +480,30 @@ int run_all_tests_win() {
                 timespec_get(&end, TIME_UTC);
                 long elapsed_ms =
                     (end.tv_sec - start.tv_sec) * 1000 + (end.tv_nsec - start.tv_nsec) / 1000000;
+                char *err_buf = NULL;
+                if (tstatus.msg) {
+                    err_buf = tstatus.msg->buf;
+                }
                 switch (tstatus.status) {
                 case Success:
-                    string_append(output, " " GREEN "[PASSED, %ldms]" RESET "\n", elapsed_ms);
+                    string_append(output, " " GREEN "[PASSED, %ldms]" RESET "\n%s\n\n", elapsed_ms,
+                                  err_buf ? err_buf : "");
                     passed += 1;
                     break;
                 case Fail:
-                    string_append(output, " " RED "[FAILED, %ldms]" RESET "\n\t  > %s\n\n",
-                                  elapsed_ms, tstatus.fail_msg);
+                    string_append(output, " " RED "[FAILED, %ldms]" RESET "\n%s\n\n", elapsed_ms,
+                                  err_buf ? err_buf : "");
                     failed += 1;
-                    free(tstatus.fail_msg);
+
                     break;
                 case Skip:
-                    string_append(output, " " YELLOW "[SKIPPED, ⏭ ]" RESET "\n");
+                    string_append(output, " " YELLOW "[SKIPPED, ⏭ ]" RESET "\n%s\n\n",
+                                  err_buf ? err_buf : "");
                     skipped += 1;
                     break;
                 case Timeout:
-                    string_append(output, " " GREY "[TIMEOUT, ⧖ ]" RESET "\n");
+                    string_append(output, " " GREY "[TIMEOUT, ⧖ ]" RESET "\n%s\n\n",
+                                  err_buf ? err_buf : "");
                     timeout += 1;
                     break;
                 case Crashed:
@@ -496,6 +513,9 @@ int run_all_tests_win() {
                 default:
                     assert(0 && "Unreachable");
                 };
+                if (tstatus.msg) {
+                    string_free(tstatus.msg);
+                }
                 CloseHandle(thread);
             }
             test_vec_free(tv);
