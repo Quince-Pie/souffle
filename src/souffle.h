@@ -337,13 +337,9 @@ void register_test(const char *suite, const char *name, TestFunc func, SetupFunc
 
 int run_all_tests();
 
-#define SETUP(suite, name)                                                                         \
-    extern void suite##_##name##_setup(void **ctx) __attribute__((weak));                          \
-    void suite##_##name##_setup(void **ctx)
+#define SETUP(suite, name) __attribute__((weak)) void suite##_##name##_setup(void **ctx)
 
-#define TEARDOWN(suite, name)                                                                      \
-    extern void suite##_##name##_teardown(void **ctx) __attribute__((weak));                       \
-    void suite##_##name##_teardown(void **ctx)
+#define TEARDOWN(suite, name) __attribute__((weak)) void suite##_##name##_teardown(void **ctx)
 
 #define TEST(suite, name)                                                                          \
     SETUP(suite, name);                                                                            \

@@ -4,7 +4,6 @@
 #include <signal.h>
 #include <sys/ioctl.h>
 #include <sys/wait.h>
-#include <threads.h>
 #include <unistd.h>
 #else
 #include <windows.h>
