@@ -186,13 +186,13 @@ checks: expected == false
 
 checks: expected == actual
 
-Used for generic assertions for various basic types such as int and floats. This function includes a static assertion for a type check, so your types must be matching or casted correctly.
+Used for generic assertions for various basic types such as int and floats.
 
 ##### `ASSERT_NE(expected, actual)`
 
 checks: expected != actual
 
-Used for generic assertions for various basic types such as int and floats. This function includes a static assertion for a type check, so your types must be matching or casted correctly.
+Used for generic assertions for various basic types such as int and floats.
 
 ##### `ASSERT_PTR_EQ(expected, actual)`
 
@@ -214,31 +214,31 @@ checks: val != NULL.
 
 checks: expected > actual
 
-Used for generic assertions for various basic types such as int and floats. This function includes a static assertion for a type check, so your types must be matching or casted correctly.
+Used for generic assertions for various basic types such as int and floats.
 
 ##### `ASSERT_LT(expected, actual)`
 
 checks: expected < actual
 
-Used for generic assertions for various basic types such as int and floats. This function includes a static assertion for a type check, so your types must be matching or casted correctly.
+Used for generic assertions for various basic types such as int and floats.
 
 ##### `ASSERT_GTE(expected, actual)`
 
 checks: expected >= actual
 
-Used for generic assertions for various basic types such as int and floats. This function includes a static assertion for a type check, so your types must be matching or casted correctly.
+Used for generic assertions for various basic types such as int and floats.
 
 ##### `ASSERT_LTE(expected, actual)`
 
 checks: expected <= actual
 
-Used for generic assertions for various basic types such as int and floats. This function includes a static assertion for a type check, so your types must be matching or casted correctly.
+Used for generic assertions for various basic types such as int and floats.
 
 ##### `ASSERT_UINT_ARR_EQ(expected, actual)`
 
 checks: expected == actual for every element in the array (any unsigned type).
 
-Used for generic assertions for various basic types such as int and floats. This function includes a static assertion for a type check on the first element, so your types must be matching or casted correctly.
+Used for generic assertions for various basic types such as int and floats.
 
 This assertion will print both arrays on failure.
 
@@ -246,15 +246,11 @@ This assertion will print both arrays on failure.
 
 checks: expected == actual for every element in the array (any signed type).
 
-Used for generic assertions for various basic types such as int and floats. This function includes a static assertion for a type check on the first element, so your types must be matching or casted correctly.
-
 This assertion will print both arrays on failure.
 
 ##### `ASSERT_FLOAT_ARR_EQ(expected, actual)`
 
 checks: expected == actual for every element in the array (any float type).
-
-Used for generic assertions for various basic types such as int and floats. This function includes a static assertion for a type check on the first element, so your types must be matching or casted correctly.
 
 This assertion will print both arrays on failure.
 
