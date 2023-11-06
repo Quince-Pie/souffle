@@ -13,12 +13,10 @@
 #endif // _WIN32
 
 #include <stdarg.h>
-#include <stdatomic.h>
 #include <stddef.h>
 #include <time.h>
 #include "klib/khash.h"
 #include "souffle.h"
-#include "stdlib.h"
 
 #ifndef SOUFFLE_NOCOLOR
 #define UNDERLINED "\033[4m"

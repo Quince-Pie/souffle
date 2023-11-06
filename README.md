@@ -13,8 +13,8 @@ Souffle aims to be simple and easy to use while offering as much helpful feature
 ### What to Expect From Souffle
 
 1. Simple test declaration (No main function is needed).
-2. No setjmps / longjmps (vfork is utilized instead).
-3. Reasonably fast.
+2. Test isolation through vfork to catch crashes (no setjmp/longjmp).
+3. Reasonably fast (16k test runs under 300ms).
 4. Easy to integrate with your project (with and without build system).
 5. Works on modern C2x/C23 compilers and systems.
 
