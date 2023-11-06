@@ -66,7 +66,7 @@ void souffle_log_msg_raw(StatusInfo *status_info, const char *fmt, ...) PRINTF(2
     do {                                                                                           \
         if (!cond) {                                                                               \
             status_info->status = Fail;                                                            \
-            LOG_TRACE_MSG("Expected: \"true\"\n\t  >> Got: \"false\"");                            \
+            LOG_TRACE_MSG("Expected: \"true\"\n\t  >> Got: \"false\"\n");                          \
             return;                                                                                \
         }                                                                                          \
     } while (0)
@@ -75,7 +75,7 @@ void souffle_log_msg_raw(StatusInfo *status_info, const char *fmt, ...) PRINTF(2
     do {                                                                                           \
         if (cond) {                                                                                \
             status_info->status = Fail;                                                            \
-            LOG_TRACE_MSG("Expected: \"false\"\n\t  >> Got: \"true\"");                            \
+            LOG_TRACE_MSG("Expected: \"false\"\n\t  >> Got: \"true\"\n");                          \
             return;                                                                                \
         }                                                                                          \
     } while (0)
@@ -85,13 +85,14 @@ void souffle_log_msg_raw(StatusInfo *status_info, const char *fmt, ...) PRINTF(2
         if (a != b) {                                                                              \
             status_info->status = Fail;                                                            \
             if (ISFLOAT(a)) {                                                                      \
-                LOG_TRACE_MSG("Expected: \"%Lf\"\n\t  >> Got: \"%Lf\"", (long double)a,            \
+                LOG_TRACE_MSG("Expected: \"%Lf\"\n\t  >> Got: \"%Lf\"\n", (long double)a,          \
                               (long double)b);                                                     \
             } else if (ISUNSIGNED(a)) {                                                            \
-                LOG_TRACE_MSG("Expected: \"%zu\"\n\t  >> Got: \"%zu\"", (uintmax_t)a,              \
+                LOG_TRACE_MSG("Expected: \"%zu\"\n\t  >> Got: \"%zu\"\n", (uintmax_t)a,            \
                               (uintmax_t)b);                                                       \
             } else {                                                                               \
-                LOG_TRACE_MSG("Expected: \"%zd\"\n\t  >> Got: \"%zd\"", (intmax_t)a, (intmax_t)b); \
+                LOG_TRACE_MSG("Expected: \"%zd\"\n\t  >> Got: \"%zd\"\n", (intmax_t)a,             \
+                              (intmax_t)b);                                                        \
             }                                                                                      \
             return;                                                                                \
         }                                                                                          \
@@ -101,7 +102,7 @@ void souffle_log_msg_raw(StatusInfo *status_info, const char *fmt, ...) PRINTF(2
     do {                                                                                           \
         if (a != b) {                                                                              \
             status_info->status = Fail;                                                            \
-            LOG_TRACE_MSG("Expected: \"%p\"\n\t  >> Got: \"%p\"", (void *)a, (void *)b);           \
+            LOG_TRACE_MSG("Expected: \"%p\"\n\t  >> Got: \"%p\"\n", (void *)a, (void *)b);         \
             return;                                                                                \
         }                                                                                          \
     } while (0)
@@ -110,7 +111,7 @@ void souffle_log_msg_raw(StatusInfo *status_info, const char *fmt, ...) PRINTF(2
     do {                                                                                           \
         if (a == b) {                                                                              \
             status_info->status = Fail;                                                            \
-            LOG_TRACE_MSG("Expected: \"%p\"\n\t  >> Got: \"%p\"", (void *)a, (void *)b);           \
+            LOG_TRACE_MSG("Expected: \"%p\"\n\t  >> Got: \"%p\"\n", (void *)a, (void *)b);         \
             return;                                                                                \
         }                                                                                          \
     } while (0)
@@ -119,7 +120,7 @@ void souffle_log_msg_raw(StatusInfo *status_info, const char *fmt, ...) PRINTF(2
     do {                                                                                           \
         if (a != NULL) {                                                                           \
             status_info->status = Fail;                                                            \
-            LOG_TRACE_MSG("Expected: \"NULL\"\n\t  >> Got: \"%p\"", (void *)a);                    \
+            LOG_TRACE_MSG("Expected: \"NULL\"\n\t  >> Got: \"%p\"\n", (void *)a);                  \
             return;                                                                                \
         }                                                                                          \
     } while (0)
@@ -128,7 +129,7 @@ void souffle_log_msg_raw(StatusInfo *status_info, const char *fmt, ...) PRINTF(2
     do {                                                                                           \
         if (a == NULL) {                                                                           \
             status_info->status = Fail;                                                            \
-            LOG_TRACE_MSG("Expected: \"NOT NULL\"\n\t  >> Got: \"NULL\"");                         \
+            LOG_TRACE_MSG("Expected: \"NOT NULL\"\n\t  >> Got: \"NULL\"\n");                       \
             return;                                                                                \
         }                                                                                          \
     } while (0)
@@ -138,13 +139,14 @@ void souffle_log_msg_raw(StatusInfo *status_info, const char *fmt, ...) PRINTF(2
         if (a == b) {                                                                              \
             status_info->status = Fail;                                                            \
             if (ISFLOAT(a)) {                                                                      \
-                LOG_TRACE_MSG("Expected: \"%Lf\"\n\t  >> Got: \"%Lf\"", (long double)a,            \
+                LOG_TRACE_MSG("Expected: \"%Lf\"\n\t  >> Got: \"%Lf\"\n", (long double)a,          \
                               (long double)b);                                                     \
             } else if (ISUNSIGNED(a)) {                                                            \
-                LOG_TRACE_MSG("Expected: \"%zu\"\n\t  >> Got: \"%zu\"", (uintmax_t)a,              \
+                LOG_TRACE_MSG("Expected: \"%zu\"\n\t  >> Got: \"%zu\"\n", (uintmax_t)a,            \
                               (uintmax_t)b);                                                       \
             } else {                                                                               \
-                LOG_TRACE_MSG("Expected: \"%zd\"\n\t  >> Got: \"%zd\"", (intmax_t)a, (intmax_t)b); \
+                LOG_TRACE_MSG("Expected: \"%zd\"\n\t  >> Got: \"%zd\"\n", (intmax_t)a,             \
+                              (intmax_t)b);                                                        \
             }                                                                                      \
             return;                                                                                \
         }                                                                                          \
@@ -155,13 +157,14 @@ void souffle_log_msg_raw(StatusInfo *status_info, const char *fmt, ...) PRINTF(2
         if (a >= b) {                                                                              \
             status_info->status = Fail;                                                            \
             if (ISFLOAT(a)) {                                                                      \
-                LOG_TRACE_MSG("Expected: \"%Lf\"\n\t  >> Got: \"%Lf\"", (long double)a,            \
+                LOG_TRACE_MSG("Expected: \"%Lf\"\n\t  >> Got: \"%Lf\"\n", (long double)a,          \
                               (long double)b);                                                     \
             } else if (ISUNSIGNED(a)) {                                                            \
-                LOG_TRACE_MSG("Expected: \"%zu\"\n\t  >> Got: \"%zu\"", (uintmax_t)a,              \
+                LOG_TRACE_MSG("Expected: \"%zu\"\n\t  >> Got: \"%zu\"\n", (uintmax_t)a,            \
                               (uintmax_t)b);                                                       \
             } else {                                                                               \
-                LOG_TRACE_MSG("Expected: \"%zd\"\n\t  >> Got: \"%zd\"", (intmax_t)a, (intmax_t)b); \
+                LOG_TRACE_MSG("Expected: \"%zd\"\n\t  >> Got: \"%zd\"\n", (intmax_t)a,             \
+                              (intmax_t)b);                                                        \
             }                                                                                      \
             return;                                                                                \
         }                                                                                          \
@@ -172,13 +175,14 @@ void souffle_log_msg_raw(StatusInfo *status_info, const char *fmt, ...) PRINTF(2
         if (a > b) {                                                                               \
             status_info->status = Fail;                                                            \
             if (ISFLOAT(a)) {                                                                      \
-                LOG_TRACE_MSG("Expected: \"%Lf\"\n\t  >> Got: \"%Lf\"", (long double)a,            \
+                LOG_TRACE_MSG("Expected: \"%Lf\"\n\t  >> Got: \"%Lf\"\n", (long double)a,          \
                               (long double)b);                                                     \
             } else if (ISUNSIGNED(a)) {                                                            \
-                LOG_TRACE_MSG("Expected: \"%zu\"\n\t  >> Got: \"%zu\"", (uintmax_t)a,              \
+                LOG_TRACE_MSG("Expected: \"%zu\"\n\t  >> Got: \"%zu\"\n", (uintmax_t)a,            \
                               (uintmax_t)b);                                                       \
             } else {                                                                               \
-                LOG_TRACE_MSG("Expected: \"%zd\"\n\t  >> Got: \"%zd\"", (intmax_t)a, (intmax_t)b); \
+                LOG_TRACE_MSG("Expected: \"%zd\"\n\t  >> Got: \"%zd\"\n", (intmax_t)a,             \
+                              (intmax_t)b);                                                        \
             }                                                                                      \
             return;                                                                                \
         }                                                                                          \
@@ -189,13 +193,14 @@ void souffle_log_msg_raw(StatusInfo *status_info, const char *fmt, ...) PRINTF(2
         if (a <= b) {                                                                              \
             status_info->status = Fail;                                                            \
             if (ISFLOAT(a)) {                                                                      \
-                LOG_TRACE_MSG("Expected: \"%Lf\"\n\t  >> Got: \"%Lf\"", (long double)a,            \
+                LOG_TRACE_MSG("Expected: \"%Lf\"\n\t  >> Got: \"%Lf\"\n", (long double)a,          \
                               (long double)b);                                                     \
             } else if (ISUNSIGNED(a)) {                                                            \
-                LOG_TRACE_MSG("Expected: \"%zu\"\n\t  >> Got: \"%zu\"", (uintmax_t)a,              \
+                LOG_TRACE_MSG("Expected: \"%zu\"\n\t  >> Got: \"%zu\"\n", (uintmax_t)a,            \
                               (uintmax_t)b);                                                       \
             } else {                                                                               \
-                LOG_TRACE_MSG("Expected: \"%zd\"\n\t  >> Got: \"%zd\"", (intmax_t)a, (intmax_t)b); \
+                LOG_TRACE_MSG("Expected: \"%zd\"\n\t  >> Got: \"%zd\"\n", (intmax_t)a,             \
+                              (intmax_t)b);                                                        \
             }                                                                                      \
             return;                                                                                \
         }                                                                                          \
@@ -206,13 +211,14 @@ void souffle_log_msg_raw(StatusInfo *status_info, const char *fmt, ...) PRINTF(2
         if (a < b) {                                                                               \
             status_info->status = Fail;                                                            \
             if (ISFLOAT(a)) {                                                                      \
-                LOG_TRACE_MSG("Expected: \"%Lf\"\n\t  >> Got: \"%Lf\"", (long double)a,            \
+                LOG_TRACE_MSG("Expected: \"%Lf\"\n\t  >> Got: \"%Lf\"\n", (long double)a,          \
                               (long double)b);                                                     \
             } else if (ISUNSIGNED(a)) {                                                            \
-                LOG_TRACE_MSG("Expected: \"%zu\"\n\t  >> Got: \"%zu\"", (uintmax_t)a,              \
+                LOG_TRACE_MSG("Expected: \"%zu\"\n\t  >> Got: \"%zu\"\n", (uintmax_t)a,            \
                               (uintmax_t)b);                                                       \
             } else {                                                                               \
-                LOG_TRACE_MSG("Expected: \"%zd\"\n\t  >> Got: \"%zd\"", (intmax_t)a, (intmax_t)b); \
+                LOG_TRACE_MSG("Expected: \"%zd\"\n\t  >> Got: \"%zd\"\n", (intmax_t)a,             \
+                              (intmax_t)b);                                                        \
             }                                                                                      \
             return;                                                                                \
         }                                                                                          \
@@ -222,7 +228,7 @@ void souffle_log_msg_raw(StatusInfo *status_info, const char *fmt, ...) PRINTF(2
     do {                                                                                           \
         if (strcmp(str1, str2) != 0) {                                                             \
             status_info->status = Fail;                                                            \
-            LOG_TRACE_MSG("Expected: \"%s\"\n\t  >> Got: \"%s\"", str1, str2);                     \
+            LOG_TRACE_MSG("Expected: \"%s\"\n\t  >> Got: \"%s\"\n", str1, str2);                   \
             return;                                                                                \
         }                                                                                          \
     } while (0)
@@ -231,7 +237,7 @@ void souffle_log_msg_raw(StatusInfo *status_info, const char *fmt, ...) PRINTF(2
     do {                                                                                           \
         if (strcmp(str1, str2) == 0) {                                                             \
             status_info->status = Fail;                                                            \
-            LOG_TRACE_MSG("Expected: \"%s\"\n\t  >> Got: \"%s\"", str1, str2);                     \
+            LOG_TRACE_MSG("Expected: \"%s\"\n\t  >> Got: \"%s\"\n", str1, str2);                   \
             return;                                                                                \
         }                                                                                          \
     } while (0)
@@ -254,7 +260,7 @@ void souffle_log_msg_raw(StatusInfo *status_info, const char *fmt, ...) PRINTF(2
             for (typeof(size) i = 1; i < size; ++i) {                                              \
                 LOG_MSG(", %zd", (intmax_t)arr2[i]);                                               \
             }                                                                                      \
-            LOG_MSG(" ]");                                                                         \
+            LOG_MSG(" ]\n");                                                                       \
             return;                                                                                \
         }                                                                                          \
     } while (0)
@@ -277,7 +283,7 @@ void souffle_log_msg_raw(StatusInfo *status_info, const char *fmt, ...) PRINTF(2
             for (typeof(size) i = 1; i < size; ++i) {                                              \
                 LOG_MSG(", %zu", (uintmax_t)arr2[i]);                                              \
             }                                                                                      \
-            LOG_MSG(" ]");                                                                         \
+            LOG_MSG(" ]\n");                                                                       \
             return;                                                                                \
         }                                                                                          \
     } while (0)
@@ -300,7 +306,7 @@ void souffle_log_msg_raw(StatusInfo *status_info, const char *fmt, ...) PRINTF(2
             for (typeof(size) i = 1; i < size; ++i) {                                              \
                 LOG_MSG(", %Lf", (long double)arr2[i]);                                            \
             }                                                                                      \
-            LOG_MSG(" ]");                                                                         \
+            LOG_MSG(" ]\n");                                                                       \
             return;                                                                                \
         }                                                                                          \
     } while (0)

@@ -231,7 +231,7 @@ int run_all_tests() {
     string_append(output, "=== Test Run Started ===\n");
     string_append(output, "%.*s\n\n", max_cols, DASHES);
     string_append(output, "Running %zu tests in %d suites\n", tcount, scount);
-    string_append(output, "%.*s\n", max_cols, DASHES);
+    string_append(output, "%.*s\n\n", max_cols, DASHES);
 
     int passed = 0;
     int failed = 0;
@@ -246,7 +246,7 @@ int run_all_tests() {
             int spaces_required = max_cols - 11 - strlen(suite_name);
             if (spaces_required < 0)
                 spaces_required = 0;
-            string_append(output, "\n⣿ Suite: %.*s %*s⣿\n", max_cols - 11, suite_name,
+            string_append(output, "⣿ Suite: %.*s %*s⣿\n", max_cols - 11, suite_name,
                           spaces_required, "");
             for (volatile size_t idx = 0; idx < tv->len; ++idx) {
                 int padding = max_cols - strlen(tv->tests[idx].name) - 28;
@@ -315,23 +315,23 @@ int run_all_tests() {
                     if (WIFEXITED(status)) {
                         switch ((enum Status)WEXITSTATUS(status)) {
                         case Success:
-                            string_append(output, " " GREEN "[PASSED, %ldms]" RESET "\n%s\n\n",
+                            string_append(output, " " GREEN "[PASSED, %ldms]" RESET "\n%s\n",
                                           elapsed_ms, err_buf ? err_buf : "");
                             passed += 1;
                             break;
                         case Fail: {
-                            string_append(output, " " RED "[FAILED, %ldms]" RESET "\n%s\n\n",
+                            string_append(output, " " RED "[FAILED, %ldms]" RESET "\n%s\n",
                                           elapsed_ms, err_buf ? err_buf : "");
                             failed += 1;
                             break;
                         }
                         case Skip:
-                            string_append(output, " " YELLOW "[SKIPPED, ⏭ ]" RESET "\n%s\n\n",
+                            string_append(output, " " YELLOW "[SKIPPED, ⏭ ]" RESET "\n%s\n",
                                           err_buf ? err_buf : "");
                             skipped += 1;
                             break;
                         case Timeout:
-                            string_append(output, " " GREY "[TIMEOUT, ⧖ ]" RESET "\n%s\n\n",
+                            string_append(output, " " GREY "[TIMEOUT, ⧖ ]" RESET "\n%s\n",
                                           err_buf ? err_buf : "");
                             timeout += 1;
                             break;
@@ -351,7 +351,7 @@ int run_all_tests() {
     }
 
     kh_destroy(str_map, test_suites);
-    string_append(output, "\n%.*s\n", max_cols, DASHES);
+    string_append(output, "%.*s\n\n", max_cols, DASHES);
     string_append(output, "=== Test Run Summary ===\n");
     string_append(output,
                   "Total Tests: %zu | " GREEN "Passed" RESET ": %d | " RED "Failed" RESET
@@ -428,7 +428,7 @@ int run_all_tests_win() {
     string_append(output, "=== Test Run Started ===\n");
     string_append(output, "%.*s\n\n", max_cols, DASHES);
     string_append(output, "Running %zu tests in %d suites\n", tcount, scount);
-    string_append(output, "%.*s\n", max_cols, DASHES);
+    string_append(output, "%.*s\n\n", max_cols, DASHES);
 
     int passed = 0;
     int failed = 0;
@@ -443,7 +443,7 @@ int run_all_tests_win() {
             int spaces_required = max_cols - 11 - strlen(suite_name);
             if (spaces_required < 0)
                 spaces_required = 0;
-            string_append(output, "\n⣿ Suite: %.*s %*s⣿\n", max_cols - 11, suite_name,
+            string_append(output, "⣿ Suite: %.*s %*s⣿\n", max_cols - 11, suite_name,
                           spaces_required, "");
             for (size_t idx = 0; idx < tv->len; ++idx) {
 
@@ -486,28 +486,28 @@ int run_all_tests_win() {
                 }
                 switch (tstatus.status) {
                 case Success:
-                    string_append(output, " " GREEN "[PASSED, %ldms]" RESET "\n%s\n\n", elapsed_ms,
+                    string_append(output, " " GREEN "[PASSED, %ldms]" RESET "\n%s\n", elapsed_ms,
                                   err_buf ? err_buf : "");
                     passed += 1;
                     break;
                 case Fail:
-                    string_append(output, " " RED "[FAILED, %ldms]" RESET "\n%s\n\n", elapsed_ms,
+                    string_append(output, " " RED "[FAILED, %ldms]" RESET "\n%s\n", elapsed_ms,
                                   err_buf ? err_buf : "");
                     failed += 1;
 
                     break;
                 case Skip:
-                    string_append(output, " " YELLOW "[SKIPPED, ⏭ ]" RESET "\n%s\n\n",
+                    string_append(output, " " YELLOW "[SKIPPED, ⏭ ]" RESET "\n%s\n",
                                   err_buf ? err_buf : "");
                     skipped += 1;
                     break;
                 case Timeout:
-                    string_append(output, " " GREY "[TIMEOUT, ⧖ ]" RESET "\n%s\n\n",
+                    string_append(output, " " GREY "[TIMEOUT, ⧖ ]" RESET "\n%s\n",
                                   err_buf ? err_buf : "");
                     timeout += 1;
                     break;
                 case Crashed:
-                    string_append(output, " " MAGENTA "[CRASHED, ☠ ]" RESET "\n");
+                    string_append(output, " " MAGENTA "[CRASHED, ☠ ]" RESET "\n\n");
                     crashed += 1;
                     break;
                 default:
@@ -523,7 +523,7 @@ int run_all_tests_win() {
     }
 
     kh_destroy(str_map, test_suites);
-    string_append(output, "\n%.*s\n", max_cols, DASHES);
+    string_append(output, "%.*s\n\n", max_cols, DASHES);
     string_append(output, "=== Test Run Summary ===\n");
     string_append(output,
                   "Total Tests: %zu | " GREEN "Passed" RESET ": %d | " RED "Failed" RESET

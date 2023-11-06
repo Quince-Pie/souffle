@@ -34,11 +34,8 @@ ____________________________________________________________________________
 ⣿ Suite: EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE            ⣿
     🧪 EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE ...... <span style="color: #00aa00">[PASSED, 0ms]</span>
 
-
-
 ⣿ Suite: main_suite                                                        ⣿
   ⚙ 🧪 TestCase1 ............................................. <span style="color: #00aa00">[PASSED, 0ms]</span>
-
 
     🧪 test_number_eq ........................................ <span style="color: #aa0000">[FAILED, 0ms]</span>
 	  &gt; [<span style="text-decoration: underline">examples/basic.c:27</span>]:
@@ -48,7 +45,6 @@ ____________________________________________________________________________
     🧪 exception_test ........................................ <span style="color: #E850A8">[CRASHED, ☠ ]</span>
 
     🧪 pass .................................................. <span style="color: #00aa00">[PASSED, 0ms]</span>
-
 
     🧪 pass_fail_pass ........................................ <span style="color: #aa0000">[FAILED, 0ms]</span>
 	  &gt; [<span style="text-decoration: underline">examples/basic.c:43</span>]:
@@ -67,12 +63,9 @@ ____________________________________________________________________________
 
     🧪 skip_me ............................................... <span style="color: #aa5500">[SKIPPED, ⏭ ]</span>
 
-
     🧪 long_test ............................................. <span style="color: #00aa00">[PASSED, 3000ms]</span>
 
-
     🧪 timeout_test .......................................... <span style="color: #7f7f7f">[TIMEOUT, ⧖ ]</span>
-
 
     🧪 string_test ........................................... <span style="color: #aa0000">[FAILED, 0ms]</span>
 	  &gt; [<span style="text-decoration: underline">examples/basic.c:96</span>]:
@@ -82,20 +75,17 @@ ____________________________________________________________________________
     🧪 log_on_pass ........................................... <span style="color: #00aa00">[PASSED, 0ms]</span>
 	  This is a log message
 
-
 ⣿ Suite: arr_suite                                                         ⣿
     🧪 array_check ........................................... <span style="color: #aa0000">[FAILED, 0ms]</span>
 	  &gt; [<span style="text-decoration: underline">examples/basic.c:69</span>]:
 	  &gt;&gt; Expected: [ 1, 2, 3 ]
 	  &gt;&gt; Got: [ 1, 4, 3 ]
 
-
 ⣿ Suite: suite_2                                                           ⣿
     🧪 is_true ............................................... <span style="color: #00aa00">[PASSED, 0ms]</span>
 
-
-
 ____________________________________________________________________________
+
 === Test Run Summary ===
 Total Tests: 15 | <span style="color: #00aa00">Passed</span>: 6 | <span style="color: #aa0000">Failed</span>: 6 | <span style="color: #E850A8">Crashed</span>: 1 | <span style="color: #aa5500">Skipped</span>: 1 | <span style="color: #7f7f7f">Timeout</span>: 1
 ____________________________________________________________________________
@@ -158,7 +148,6 @@ test('basic', exe)
 
 ### Documentation
 
-Please view the examples under the examples folder for an example usage.
 
 #### Environment Variables
 
