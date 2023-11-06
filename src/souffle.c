@@ -362,7 +362,7 @@ int run_all_tests() {
     fprintf(stdout, "%s", output->buf);
     string_free(output);
     if (crashed > 0 || failed > 0 || timeout > 0) {
-        return -1;
+        return 1;
     }
     return 0;
 }
@@ -534,7 +534,7 @@ int run_all_tests_win() {
     fprintf(stdout, "%s", output->buf);
     string_free(output);
     if (crashed > 0 || failed > 0 || timeout > 0) {
-        return -1;
+        return 1;
     }
     return 0;
 }
