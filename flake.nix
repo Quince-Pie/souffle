@@ -36,6 +36,7 @@
             meson
             ninja
             pkg-config
+            libunwind
             python3
             valgrind
           ];

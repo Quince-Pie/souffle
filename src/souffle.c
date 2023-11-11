@@ -14,7 +14,7 @@
 #include <stdarg.h>
 #include <stddef.h>
 #include <time.h>
-#include "klib/khash.h"
+#include "hashy.h"
 #include "souffle.h"
 
 #ifndef SOUFFLE_NOCOLOR
@@ -124,8 +124,7 @@ void souffle_log_msg_raw(StatusInfo *status_info, const char *fmt, ...) {
     va_end(args);
 }
 
-KHASH_MAP_INIT_STR(str_map, TestsVec *)
-khash_t(str_map) * test_suites;
+HashTable *test_suites;
 
 static size_t tcount = 0;
 static int largest_name = 0;
@@ -158,15 +157,10 @@ static void test_vec_push(TestsVec *tv, Test t) {
 void register_test(const char *suite, const char *name, TestFunc func, SetupFunc setup,
                    TeardownFunc teardown) {
     if (test_suites == NULL) {
-        test_suites = kh_init(str_map);
+        test_suites = hashy_init();
     }
     assert(test_suites);
-    int ret;
-    khiter_t k = kh_put(str_map, test_suites, suite, &ret);
-    if (ret == -1) {
-        perror("Failed to access hash table");
-        exit(EXIT_FAILURE);
-    }
+    void *tv = hashy_get(test_suites, suite);
     int test_name_len = strlen(name);
     if (test_name_len > largest_name) {
         largest_name = test_name_len;
@@ -181,12 +175,16 @@ void register_test(const char *suite, const char *name, TestFunc func, SetupFunc
         .setup = setup,
         .teardown = teardown,
     };
-    if (ret > 0) { // new key; initialize value to a new vec
-        kh_value(test_suites, k) = test_vec_init();
+    if (tv == NULL) {
+        tv = test_vec_init();
+        test_vec_push(tv, t);
+        hashy_insert(test_suites, suite, tv);
+        tcount += 1;
+        return;
     }
-    TestsVec *tv = kh_value(test_suites, k);
     test_vec_push(tv, t);
     tcount += 1;
+    return;
 }
 
 #ifndef _WIN32
@@ -222,7 +220,7 @@ int run_all_tests() {
     SouffleString *output = string_init();
 
     assert(test_suites);
-    khint_t scount = kh_size(test_suites);
+    int scount = test_suites->size;
 
     // Result Header
     string_append(output, "=== Test Run Started ===\n");
@@ -235,119 +233,119 @@ int run_all_tests() {
     int crashed = 0;
     int skipped = 0;
     int timeout = 0;
-    khiter_t k;
-    for (k = kh_begin(test_suites); k != kh_end(test_suites); ++k) {
-        if (kh_exist(test_suites, k)) {
-            const char *suite_name = kh_key(test_suites, k);
-            TestsVec *tv = kh_val(test_suites, k);
-            int spaces_required = max_cols - 11 - strlen(suite_name);
-            if (spaces_required < 0)
-                spaces_required = 0;
-            string_append(output, "⣿ Suite: %.*s %*s⣿\n", max_cols - 11, suite_name,
-                          spaces_required, "");
-            for (volatile size_t idx = 0; idx < tv->len; ++idx) {
-                int padding = max_cols - strlen(tv->tests[idx].name) - 28;
-                string_append(output, "  %s 🧪 %.*s ......", tv->tests[idx].setup ? "⚙" : " ",
-                              max_cols - 28, tv->tests[idx].name);
+    struct HashTableIterator iterator = hashy_iter(test_suites);
+    while (true) {
+        TestsVec *tv = NULL;
+        const char *suite_name = hashy_next(&iterator, (void **)&tv);
+        if (suite_name == NULL || tv == NULL)
+            break;
+        int spaces_required = max_cols - 11 - strlen(suite_name);
+        if (spaces_required < 0)
+            spaces_required = 0;
+        string_append(output, "⣿ Suite: %.*s %*s⣿\n", max_cols - 11, suite_name, spaces_required,
+                      "");
+        for (volatile size_t idx = 0; idx < tv->len; ++idx) {
+            int padding = max_cols - strlen(tv->tests[idx].name) - 28;
+            string_append(output, "  %s 🧪 %.*s ......", tv->tests[idx].setup ? "⚙" : " ",
+                          max_cols - 28, tv->tests[idx].name);
 
-                for (int i = 0; i < padding; ++i) {
-                    string_append(output, ".");
-                }
-                // setup pipes for transmitting fail info.
-                int pipefd[2];
-                if (pipe(pipefd) == -1) {
-                    perror("Pipe failed");
-                    exit(EXIT_FAILURE);
-                }
-                struct timespec start, end;
-                timespec_get(&start, TIME_UTC);
-                // use vfork to avoid copying memory
-                pid_t pid = vfork();
-                if (pid == 0) {
-                    // child process
-                    close(pipefd[0]);
-                    alarm_setup();
-                    StatusInfo tstatus = {
-                        .status = Success,
-                        .msg = NULL,
-                    };
-                    alarm(timeout_time);
-                    void *ctx_internl = NULL;
-                    void **ctx = &ctx_internl;
-                    if (tv->tests[idx].setup) {
-                        tv->tests[idx].setup(ctx);
-                    }
-                    tv->tests[idx].func(&tstatus, ctx);
-                    if (tv->tests[idx].teardown) {
-                        tv->tests[idx].teardown(ctx);
-                    }
-                    if (tstatus.msg) {
-                        int wret = write(pipefd[1], &tstatus.msg->len, sizeof(int));
-                        wret |= write(pipefd[1], tstatus.msg->buf, tstatus.msg->len);
-                        if (wret == -1) {
-                            perror("Failed to write to pipe");
-                        }
-                        string_free(tstatus.msg);
-                    }
-
-                    close(pipefd[1]);
-
-                    exit(tstatus.status);
-                } else {
-                    close(pipefd[1]);
-                    // parent process
-                    int status;
-                    waitpid(pid, &status, 0);
-                    timespec_get(&end, TIME_UTC);
-                    long elapsed_ms = (end.tv_sec - start.tv_sec) * 1000 +
-                                      (end.tv_nsec - start.tv_nsec) / 1000000;
-                    int buf_size = 0;
-                    int rret = read(pipefd[0], &buf_size, sizeof(int));
-                    // calloc for the null terminator
-                    char *err_buf = buf_size ? calloc((buf_size + 1), sizeof(char)) : NULL;
-                    rret = read(pipefd[0], err_buf, buf_size);
-                    if (rret == -1) {
-                        perror("Failed to read to pipe");
-                    }
-                    if (WIFEXITED(status)) {
-                        switch ((enum Status)WEXITSTATUS(status)) {
-                        case Success:
-                            string_append(output, " " GREEN "[PASSED, %ldms]" RESET "\n%s\n",
-                                          elapsed_ms, err_buf ? err_buf : "");
-                            passed += 1;
-                            break;
-                        case Fail: {
-                            string_append(output, " " RED "[FAILED, %ldms]" RESET "\n%s\n",
-                                          elapsed_ms, err_buf ? err_buf : "");
-                            failed += 1;
-                            break;
-                        }
-                        case Skip:
-                            string_append(output, " " YELLOW "[SKIPPED, ⏭ ]" RESET "\n%s\n",
-                                          err_buf ? err_buf : "");
-                            skipped += 1;
-                            break;
-                        case Timeout:
-                            string_append(output, " " GREY "[TIMEOUT, ⧖ ]" RESET "\n%s\n",
-                                          err_buf ? err_buf : "");
-                            timeout += 1;
-                            break;
-                        default:
-                            unreachable();
-                        };
-                    } else if (WIFSIGNALED(status)) {
-                        string_append(output, " " MAGENTA "[CRASHED, ☠ ]" RESET "\n\n");
-                        crashed += 1;
-                    }
-                    free(err_buf);
-                    close(pipefd[0]);
-                }
+            for (int i = 0; i < padding; ++i) {
+                string_append(output, ".");
             }
-            test_vec_free(tv);
+            // setup pipes for transmitting fail info.
+            int pipefd[2];
+            if (pipe(pipefd) == -1) {
+                perror("Pipe failed");
+                exit(EXIT_FAILURE);
+            }
+            struct timespec start, end;
+            timespec_get(&start, TIME_UTC);
+            // use vfork to avoid copying memory
+            pid_t pid = vfork();
+            if (pid == 0) {
+                // child process
+                close(pipefd[0]);
+                alarm_setup();
+                StatusInfo tstatus = {
+                    .status = Success,
+                    .msg = NULL,
+                };
+                alarm(timeout_time);
+                void *ctx_internl = NULL;
+                void **ctx = &ctx_internl;
+                if (tv->tests[idx].setup) {
+                    tv->tests[idx].setup(ctx);
+                }
+                tv->tests[idx].func(&tstatus, ctx);
+                if (tv->tests[idx].teardown) {
+                    tv->tests[idx].teardown(ctx);
+                }
+                if (tstatus.msg) {
+                    int wret = write(pipefd[1], &tstatus.msg->len, sizeof(int));
+                    wret |= write(pipefd[1], tstatus.msg->buf, tstatus.msg->len);
+                    if (wret == -1) {
+                        perror("Failed to write to pipe");
+                    }
+                    string_free(tstatus.msg);
+                }
+
+                close(pipefd[1]);
+
+                exit(tstatus.status);
+            } else {
+                close(pipefd[1]);
+                // parent process
+                int status;
+                waitpid(pid, &status, 0);
+                timespec_get(&end, TIME_UTC);
+                long elapsed_ms =
+                    (end.tv_sec - start.tv_sec) * 1000 + (end.tv_nsec - start.tv_nsec) / 1000000;
+                int buf_size = 0;
+                int rret = read(pipefd[0], &buf_size, sizeof(int));
+                // calloc for the null terminator
+                char *err_buf = buf_size ? calloc((buf_size + 1), sizeof(char)) : NULL;
+                rret = read(pipefd[0], err_buf, buf_size);
+                if (rret == -1) {
+                    perror("Failed to read to pipe");
+                }
+                if (WIFEXITED(status)) {
+                    switch ((enum Status)WEXITSTATUS(status)) {
+                    case Success:
+                        string_append(output, " " GREEN "[PASSED, %ldms]" RESET "\n%s\n",
+                                      elapsed_ms, err_buf ? err_buf : "");
+                        passed += 1;
+                        break;
+                    case Fail: {
+                        string_append(output, " " RED "[FAILED, %ldms]" RESET "\n%s\n", elapsed_ms,
+                                      err_buf ? err_buf : "");
+                        failed += 1;
+                        break;
+                    }
+                    case Skip:
+                        string_append(output, " " YELLOW "[SKIPPED, ⏭ ]" RESET "\n%s\n",
+                                      err_buf ? err_buf : "");
+                        skipped += 1;
+                        break;
+                    case Timeout:
+                        string_append(output, " " GREY "[TIMEOUT, ⧖ ]" RESET "\n%s\n",
+                                      err_buf ? err_buf : "");
+                        timeout += 1;
+                        break;
+                    default:
+                        assert(0 && "Unreachable");
+                    };
+                } else if (WIFSIGNALED(status)) {
+                    string_append(output, " " MAGENTA "[CRASHED, ☠ ]" RESET "\n\n");
+                    crashed += 1;
+                }
+                free(err_buf);
+                close(pipefd[0]);
+            }
         }
+        test_vec_free(tv);
     }
 
-    kh_destroy(str_map, test_suites);
+    hashy_free(test_suites);
     string_append(output, "%.*s\n\n", max_cols, DASHES);
     string_append(output, "=== Test Run Summary ===\n");
     string_append(output,

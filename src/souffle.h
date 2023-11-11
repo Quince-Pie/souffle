@@ -2,10 +2,16 @@
 #define SOUFFLE_H
 
 #include <assert.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+// macro for typeof
+#if defined(__GNUC__) || defined(__clang__)
+#define typeof __typeof__
+#endif
 
 enum Status {
     Success,
@@ -57,9 +63,15 @@ void souffle_log_msg_raw(StatusInfo *status_info, const char *fmt, ...) PRINTF(2
         return;                                                                                    \
     } while (0)
 
-#define ISUNSIGNED(x) ((typeof(x))0 - 1 > 0)
-
 #define ISFLOAT(x) _Generic((x), float: true, double: true, long double: true, default: false)
+#define ISUNSIGNED(x)                                                                              \
+    _Generic((x),                                                                                  \
+        unsigned char: true,                                                                       \
+        unsigned short: true,                                                                      \
+        unsigned int: true,                                                                        \
+        unsigned long: true,                                                                       \
+        unsigned long long: true,                                                                  \
+        default: false)
 // ---------------- ASSERTIONS ----------------
 
 #define ASSERT_TRUE(cond)                                                                          \
