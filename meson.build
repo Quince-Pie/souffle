@@ -1,6 +1,6 @@
 project('souffle', 'c',
      default_options : ['warning_level=3', 'c_std=c2x', 'optimization=3'],
-    version: '1.2.0')
+    version: '1.3.0')
 
 
 if get_option('no_color')

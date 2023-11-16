@@ -31,35 +31,35 @@ ____________________________________________________________________________
 Running 15 tests in 4 suites
 ____________________________________________________________________________
 
-⣿ Suite: EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE            ⣿
-    🧪 EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE ...... <span style="color: #00aa00">[PASSED, 0ms]</span>
+⣿ Suite: suite_2                                                           ⣿
+    🧪 is_true ............................................... <span style="color: #00aa00">[PASSED, 0ms]</span>
 
 ⣿ Suite: main_suite                                                        ⣿
   ⚙ 🧪 TestCase1 ............................................. <span style="color: #00aa00">[PASSED, 0ms]</span>
 
     🧪 test_number_eq ........................................ <span style="color: #aa0000">[FAILED, 0ms]</span>
-	  &gt; [<span style="text-decoration: underline">examples/basic.c:27</span>]:
-	  &gt;&gt; Expected: "5"
-	  &gt;&gt; Got: "1"
+	  &gt; [<span style="text-decoration: underline">examples/basic.c:30</span>]:
+	  &gt;&gt; Left:  "5"
+	  &gt;&gt; Right: "1"
 
     🧪 exception_test ........................................ <span style="color: #E850A8">[CRASHED, ☠ ]</span>
 
     🧪 pass .................................................. <span style="color: #00aa00">[PASSED, 0ms]</span>
 
     🧪 pass_fail_pass ........................................ <span style="color: #aa0000">[FAILED, 0ms]</span>
-	  &gt; [<span style="text-decoration: underline">examples/basic.c:43</span>]:
-	  &gt;&gt; Expected: "2"
-	  &gt;&gt; Got: "1"
+	  &gt; [<span style="text-decoration: underline">examples/basic.c:46</span>]:
+	  &gt;&gt; Left:  "2"
+	  &gt;&gt; Right: "1"
 
     🧪 float_check ........................................... <span style="color: #aa0000">[FAILED, 0ms]</span>
-	  &gt; [<span style="text-decoration: underline">examples/basic.c:47</span>]:
-	  &gt;&gt; Expected: "1.500000"
-	  &gt;&gt; Got: "2.500000"
+	  &gt; [<span style="text-decoration: underline">examples/basic.c:50</span>]:
+	  &gt;&gt; Left:  "1.500000"
+	  &gt;&gt; Right: "2.500000"
 
     🧪 pass_fail ............................................. <span style="color: #aa0000">[FAILED, 0ms]</span>
-	  &gt; [<span style="text-decoration: underline">examples/basic.c:51</span>]:
-	  &gt;&gt; Expected: "2"
-	  &gt;&gt; Got: "1"
+	  &gt; [<span style="text-decoration: underline">examples/basic.c:54</span>]:
+	  &gt;&gt; Left:  "2"
+	  &gt;&gt; Right: "1"
 
     🧪 skip_me ............................................... <span style="color: #aa5500">[SKIPPED, ⏭ ]</span>
 
@@ -68,21 +68,21 @@ ____________________________________________________________________________
     🧪 timeout_test .......................................... <span style="color: #7f7f7f">[TIMEOUT, ⧖ ]</span>
 
     🧪 string_test ........................................... <span style="color: #aa0000">[FAILED, 0ms]</span>
-	  &gt; [<span style="text-decoration: underline">examples/basic.c:96</span>]:
-	  &gt;&gt; Expected: "Hello, World"
-	  &gt;&gt; Got: "Hello World!"
+	  &gt; [<span style="text-decoration: underline">examples/basic.c:99</span>]:
+	  &gt;&gt; Left:  "Hello, World"
+	  &gt;&gt; Right: "Hello World!"
 
     🧪 log_on_pass ........................................... <span style="color: #00aa00">[PASSED, 0ms]</span>
 	  This is a log message
 
+⣿ Suite: EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE            ⣿
+    🧪 EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE ...... <span style="color: #00aa00">[PASSED, 0ms]</span>
+
 ⣿ Suite: arr_suite                                                         ⣿
     🧪 array_check ........................................... <span style="color: #aa0000">[FAILED, 0ms]</span>
-	  &gt; [<span style="text-decoration: underline">examples/basic.c:69</span>]:
-	  &gt;&gt; Expected: [ 1, 2, 3 ]
-	  &gt;&gt; Got: [ 1, 4, 3 ]
-
-⣿ Suite: suite_2                                                           ⣿
-    🧪 is_true ............................................... <span style="color: #00aa00">[PASSED, 0ms]</span>
+	  &gt; [<span style="text-decoration: underline">examples/basic.c:72</span>]:
+	  &gt;&gt; Left:  [ 1, 2, 3 ]
+	  &gt;&gt; Right: [ 1, 4, 3 ]
 
 ____________________________________________________________________________
 
