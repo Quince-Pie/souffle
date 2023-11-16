@@ -4,7 +4,8 @@ UseTab: Never
 TabWidth: 4
 ColumnLimit: 100
 PointerAlignment: Right
-
+SeparateDefinitionBlocks: Always
+AlwaysBreakAfterReturnType: All
 
 IncludeCategories:
   - Regex:           '^".*\.h"'

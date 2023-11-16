@@ -39,7 +39,8 @@
 static const char *DASHES =
     "_________________________________________________________________________________";
 
-static SouffleString *string_init() {
+static SouffleString *
+string_init() {
     SouffleString *str = malloc(sizeof(SouffleString));
     assert(str);
     str->buf = malloc(1024 * sizeof(char));
@@ -49,22 +50,28 @@ static SouffleString *string_init() {
     return str;
 }
 
-static void string_free(SouffleString *str) {
+static void
+string_free(SouffleString *str) {
     free(str->buf);
     free(str);
 }
-static inline void string_rewind(SouffleString *str) {
+
+static inline void
+string_rewind(SouffleString *str) {
     str->len = 0;
     str->buf[0] = '\0';
 }
+
 // dump a string to stdout and rewind
-static inline void string_dump(SouffleString *str) {
+static inline void
+string_dump(SouffleString *str) {
     fprintf(stdout, "%s", str->buf);
     fflush(stdout);
     string_rewind(str);
 }
 
-void string_append(SouffleString *str, const char *fmt, ...) {
+void
+string_append(SouffleString *str, const char *fmt, ...) {
     va_list args;
     va_start(args, fmt);
     size_t size_needed = vsnprintf(NULL, 0, fmt, args);
@@ -85,7 +92,8 @@ void string_append(SouffleString *str, const char *fmt, ...) {
     va_end(args);
 }
 
-static void string_append_va(SouffleString *str, const char *fmt, va_list args) {
+static void
+string_append_va(SouffleString *str, const char *fmt, va_list args) {
     va_list args_copy;
     va_copy(args_copy, args);
     size_t size_needed = vsnprintf(NULL, 0, fmt, args);
@@ -102,7 +110,8 @@ static void string_append_va(SouffleString *str, const char *fmt, va_list args) 
     va_end(args_copy);
 }
 
-void souffle_log_msg(StatusInfo *status_info, const char *file, int lineno, const char *fmt, ...) {
+void
+souffle_log_msg(StatusInfo *status_info, const char *file, int lineno, const char *fmt, ...) {
     if (status_info->msg == NULL) {
         status_info->msg = string_init();
     }
@@ -114,7 +123,8 @@ void souffle_log_msg(StatusInfo *status_info, const char *file, int lineno, cons
     va_end(args);
 }
 
-void souffle_log_msg_raw(StatusInfo *status_info, const char *fmt, ...) {
+void
+souffle_log_msg_raw(StatusInfo *status_info, const char *fmt, ...) {
     if (status_info->msg == NULL) {
         status_info->msg = string_init();
     }
@@ -129,7 +139,8 @@ HashTable *test_suites;
 static size_t tcount = 0;
 static int largest_name = 0;
 
-static TestsVec *test_vec_init() {
+static TestsVec *
+test_vec_init() {
     TestsVec *tv = malloc(sizeof(TestsVec));
     assert(tv);
     tv->tests = malloc(128 * sizeof(Test));
@@ -138,12 +149,14 @@ static TestsVec *test_vec_init() {
     return tv;
 }
 
-static void test_vec_free(TestsVec *tv) {
+static void
+test_vec_free(TestsVec *tv) {
     free(tv->tests);
     free(tv);
 }
 
-static void test_vec_push(TestsVec *tv, Test t) {
+static void
+test_vec_push(TestsVec *tv, Test t) {
     if (tv->len == tv->capacity) {
         tv->tests = realloc(tv->tests, (size_t)(tv->capacity * 2) * sizeof(Test));
         assert(tv->tests);
@@ -154,8 +167,9 @@ static void test_vec_push(TestsVec *tv, Test t) {
     return;
 }
 
-void register_test(const char *suite, const char *name, TestFunc func, SetupFunc setup,
-                   TeardownFunc teardown) {
+void
+register_test(const char *suite, const char *name, TestFunc func, SetupFunc setup,
+              TeardownFunc teardown) {
     if (test_suites == NULL) {
         test_suites = hashy_init();
     }
@@ -188,12 +202,14 @@ void register_test(const char *suite, const char *name, TestFunc func, SetupFunc
 }
 
 #ifndef _WIN32
-void timeout_handler(int signo) {
+void
+timeout_handler(int signo) {
     (void)signo;
     exit(Timeout);
 }
 
-void alarm_setup() {
+void
+alarm_setup() {
     struct sigaction sa;
     sa.sa_handler = timeout_handler;
     sigemptyset(&sa.sa_mask);
@@ -201,7 +217,8 @@ void alarm_setup() {
     sigaction(SIGALRM, &sa, NULL);
 }
 
-int run_all_tests() {
+int
+run_all_tests() {
     const char *timeout_str = getenv("SOUFFLE_TIMEOUT");
     volatile int timeout_time = timeout_str ? atoi(timeout_str) : 20;
     if (timeout_time == 0) {
@@ -260,7 +277,6 @@ int run_all_tests() {
             }
             struct timespec start, end;
             timespec_get(&start, TIME_UTC);
-            // use vfork to avoid copying memory
             pid_t pid = vfork();
             if (pid == 0) {
                 // child process
@@ -332,7 +348,7 @@ int run_all_tests() {
                         timeout += 1;
                         break;
                     default:
-                        assert(0 && "Unreachable");
+                        unreachable();
                     };
                 } else if (WIFSIGNALED(status)) {
                     string_append(output, " " MAGENTA "[CRASHED, ☠ ]" RESET "\n\n");
@@ -369,7 +385,8 @@ typedef struct ThreadInfo {
     StatusInfo *status_info;
 } ThreadInfo;
 
-DWORD WINAPI func_exec_timeout_win(LPVOID lpParam) {
+DWORD WINAPI
+func_exec_timeout_win(LPVOID lpParam) {
     ThreadInfo *ti = (ThreadInfo *)lpParam;
     void *ctx_internl = NULL;
     void **ctx = &ctx_internl;
@@ -391,7 +408,8 @@ DWORD WINAPI func_exec_timeout_win(LPVOID lpParam) {
     }
 }
 
-int run_all_tests_win() {
+int
+run_all_tests_win() {
     const char *var_name = "SOUFFLE_TIMEOUT";
     size_t required_size;
     DWORD timeout_time = 20000;
@@ -417,8 +435,7 @@ int run_all_tests_win() {
     SouffleString *output = string_init();
 
     assert(test_suites);
-    // Result Header
-    khint_t scount = kh_size(test_suites);
+    int scount = test_suites->size;
 
     string_append(output, "=== Test Run Started ===\n");
     string_append(output, "%.*s\n\n", max_cols, DASHES);
@@ -430,94 +447,93 @@ int run_all_tests_win() {
     int crashed = 0;
     int skipped = 0;
     int timeout = 0;
-    khiter_t k;
-    for (k = kh_begin(test_suites); k != kh_end(test_suites); ++k) {
-        if (kh_exist(test_suites, k)) {
-            const char *suite_name = kh_key(test_suites, k);
-            TestsVec *tv = kh_val(test_suites, k);
-            int spaces_required = max_cols - 11 - strlen(suite_name);
-            if (spaces_required < 0)
-                spaces_required = 0;
-            string_append(output, "⣿ Suite: %.*s %*s⣿\n", max_cols - 11, suite_name,
-                          spaces_required, "");
-            for (size_t idx = 0; idx < tv->len; ++idx) {
-
-                int padding = max_cols - strlen(tv->tests[idx].name) - 28;
-                string_append(output, "  %s 🧪 %.*s ......", tv->tests[idx].setup ? "⚙" : " ",
-                              max_cols - 28, tv->tests[idx].name);
-                for (int i = 0; i < padding; ++i) {
-                    string_append(output, ".");
-                }
-                struct timespec start, end;
-                timespec_get(&start, TIME_UTC);
-                StatusInfo tstatus = {
-                    .status = Success,
-                    .msg = NULL,
-                };
-
-                // spawn a thread to run the test
-                ThreadInfo tinfo = {
-                    .test = &tv->tests[idx],
-                    .status_info = &tstatus,
-                };
-                HANDLE thread = CreateThread(NULL, 0, func_exec_timeout_win, &tinfo, 0, NULL);
-                if (thread == NULL) {
-                    perror("Failed to create thread");
-                    exit(EXIT_FAILURE);
-                }
-                // wait for the thread to finish with a timeout
-                DWORD wait_result = WaitForSingleObject(thread, timeout_time);
-                if (wait_result == WAIT_TIMEOUT) {
-                    tstatus.status = Timeout;
-                } else if (wait_result == WAIT_FAILED) {
-                    tstatus.status = Crashed;
-                }
-                timespec_get(&end, TIME_UTC);
-                long elapsed_ms =
-                    (end.tv_sec - start.tv_sec) * 1000 + (end.tv_nsec - start.tv_nsec) / 1000000;
-                char *err_buf = NULL;
-                if (tstatus.msg) {
-                    err_buf = tstatus.msg->buf;
-                }
-                switch (tstatus.status) {
-                case Success:
-                    string_append(output, " " GREEN "[PASSED, %ldms]" RESET "\n%s\n", elapsed_ms,
-                                  err_buf ? err_buf : "");
-                    passed += 1;
-                    break;
-                case Fail:
-                    string_append(output, " " RED "[FAILED, %ldms]" RESET "\n%s\n", elapsed_ms,
-                                  err_buf ? err_buf : "");
-                    failed += 1;
-
-                    break;
-                case Skip:
-                    string_append(output, " " YELLOW "[SKIPPED, ⏭ ]" RESET "\n%s\n",
-                                  err_buf ? err_buf : "");
-                    skipped += 1;
-                    break;
-                case Timeout:
-                    string_append(output, " " GREY "[TIMEOUT, ⧖ ]" RESET "\n%s\n",
-                                  err_buf ? err_buf : "");
-                    timeout += 1;
-                    break;
-                case Crashed:
-                    string_append(output, " " MAGENTA "[CRASHED, ☠ ]" RESET "\n\n");
-                    crashed += 1;
-                    break;
-                default:
-                    assert(0 && "Unreachable");
-                };
-                if (tstatus.msg) {
-                    string_free(tstatus.msg);
-                }
-                CloseHandle(thread);
-            }
-            test_vec_free(tv);
+    struct HashTableIterator iterator = hashy_iter(test_suites);
+    while (true) {
+        TestsVec *tv = NULL;
+        const char *suite_name = hashy_next(&iterator, (void **)&tv);
+        if (suite_name == NULL || tv == NULL) {
+            break;
         }
+        int spaces_required = max_cols - 11 - strlen(suite_name);
+        if (spaces_required < 0)
+            spaces_required = 0;
+        string_append(output, "⣿ Suite: %.*s %*s⣿\n", max_cols - 11, suite_name, spaces_required,
+                      "");
+        for (size_t idx = 0; idx < tv->len; ++idx) {
+
+            int padding = max_cols - strlen(tv->tests[idx].name) - 28;
+            string_append(output, "  %s 🧪 %.*s ......", tv->tests[idx].setup ? "⚙" : " ",
+                          max_cols - 28, tv->tests[idx].name);
+            for (int i = 0; i < padding; ++i) {
+                string_append(output, ".");
+            }
+            struct timespec start, end;
+            timespec_get(&start, TIME_UTC);
+            StatusInfo tstatus = {
+                .status = Success,
+                .msg = NULL,
+            };
+
+            ThreadInfo tinfo = {
+                .test = &tv->tests[idx],
+                .status_info = &tstatus,
+            };
+            HANDLE thread = CreateThread(NULL, 0, func_exec_timeout_win, &tinfo, 0, NULL);
+            if (thread == NULL) {
+                perror("Failed to create thread");
+                exit(EXIT_FAILURE);
+            }
+            DWORD wait_result = WaitForSingleObject(thread, timeout_time);
+            if (wait_result == WAIT_TIMEOUT) {
+                tstatus.status = Timeout;
+            } else if (wait_result == WAIT_FAILED) {
+                tstatus.status = Crashed;
+            }
+            timespec_get(&end, TIME_UTC);
+            long elapsed_ms =
+                (end.tv_sec - start.tv_sec) * 1000 + (end.tv_nsec - start.tv_nsec) / 1000000;
+            char *err_buf = NULL;
+            if (tstatus.msg) {
+                err_buf = tstatus.msg->buf;
+            }
+            switch (tstatus.status) {
+            case Success:
+                string_append(output, " " GREEN "[PASSED, %ldms]" RESET "\n%s\n", elapsed_ms,
+                              err_buf ? err_buf : "");
+                passed += 1;
+                break;
+            case Fail:
+                string_append(output, " " RED "[FAILED, %ldms]" RESET "\n%s\n", elapsed_ms,
+                              err_buf ? err_buf : "");
+                failed += 1;
+
+                break;
+            case Skip:
+                string_append(output, " " YELLOW "[SKIPPED, ⏭ ]" RESET "\n%s\n",
+                              err_buf ? err_buf : "");
+                skipped += 1;
+                break;
+            case Timeout:
+                string_append(output, " " GREY "[TIMEOUT, ⧖ ]" RESET "\n%s\n",
+                              err_buf ? err_buf : "");
+                timeout += 1;
+                break;
+            case Crashed:
+                string_append(output, " " MAGENTA "[CRASHED, ☠ ]" RESET "\n\n");
+                crashed += 1;
+                break;
+            default:
+                __builtin_unreachable();
+            };
+            if (tstatus.msg) {
+                string_free(tstatus.msg);
+            }
+            CloseHandle(thread);
+        }
+        test_vec_free(tv);
     }
 
-    kh_destroy(str_map, test_suites);
+    hashy_free(test_suites);
     string_append(output, "%.*s\n\n", max_cols, DASHES);
     string_append(output, "=== Test Run Summary ===\n");
     string_append(output,
@@ -535,7 +551,8 @@ int run_all_tests_win() {
 }
 #endif
 
-__attribute__((weak)) int main(void) {
+__attribute__((weak)) int
+main(void) {
 #ifndef _WIN32
     int ret = run_all_tests();
 #else

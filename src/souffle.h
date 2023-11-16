@@ -36,10 +36,12 @@ typedef struct StatusInfo {
 // Utility macro: Make sure the function is only used the same way as printf
 #define PRINTF(x) __attribute__((__format__(__printf__, (x), (x + 1))))
 
-void souffle_log_msg(StatusInfo *status_info, const char *file, int lineno, const char *fmt, ...)
+void
+souffle_log_msg(StatusInfo *status_info, const char *file, int lineno, const char *fmt, ...)
     PRINTF(4);
 
-void souffle_log_msg_raw(StatusInfo *status_info, const char *fmt, ...) PRINTF(2);
+void
+souffle_log_msg_raw(StatusInfo *status_info, const char *fmt, ...) PRINTF(2);
 
 #define LOG_TRACE_MSG(fmt, ...)                                                                    \
     do {                                                                                           \
@@ -344,10 +346,12 @@ typedef struct TestsVec {
     size_t len;
 } TestsVec;
 
-void register_test(const char *suite, const char *name, TestFunc func, SetupFunc setup,
-                   TeardownFunc teardown);
+void
+register_test(const char *suite, const char *name, TestFunc func, SetupFunc setup,
+              TeardownFunc teardown);
 
-int run_all_tests();
+int
+run_all_tests();
 
 #define SETUP(suite, name) __attribute__((weak)) void suite##_##name##_setup(void **ctx)
 

@@ -2,7 +2,13 @@
 #define MAX_LOAD_FACTOR 0.7
 #include "hashy.h"
 
-static unsigned long hash_string(const char *str) {
+// Windows does not yet have C23
+#ifdef _WIN32
+#define strdup _strdup
+#endif
+
+static unsigned long
+hash_string(const char *str) {
     unsigned long hash = 5381;
     int c;
 
@@ -13,7 +19,8 @@ static unsigned long hash_string(const char *str) {
     return hash;
 }
 
-HashTable *hashy_init() {
+HashTable *
+hashy_init() {
     HashTable *table = malloc(sizeof(HashTable));
     if (!table) {
         return NULL;
@@ -30,7 +37,8 @@ HashTable *hashy_init() {
     return table;
 }
 
-void hashy_free(HashTable *table) {
+void
+hashy_free(HashTable *table) {
     if (!table)
         return;
 
@@ -41,13 +49,14 @@ void hashy_free(HashTable *table) {
     free(table);
 }
 
-static bool hashy_resize(HashTable *table, size_t new_capacity) {
+static bool
+hashy_resize(HashTable *table, size_t new_capacity) {
     HashEntry *old_entries = table->entries;
     size_t old_capacity = table->capacity;
 
     table->entries = calloc(new_capacity, sizeof(HashEntry));
     if (!table->entries) {
-        table->entries = old_entries; // Revert to old entries
+        table->entries = old_entries;
         return false;
     }
     table->capacity = new_capacity;
@@ -63,10 +72,11 @@ static bool hashy_resize(HashTable *table, size_t new_capacity) {
     return true;
 }
 
-bool hashy_insert(HashTable *table, const char *key, void *value) {
+bool
+hashy_insert(HashTable *table, const char *key, void *value) {
     if (table->size >= table->capacity * MAX_LOAD_FACTOR) {
         if (!hashy_resize(table, table->capacity * 2)) {
-            return false; // Resize failed
+            return false;
         }
     }
 
@@ -90,7 +100,8 @@ bool hashy_insert(HashTable *table, const char *key, void *value) {
     return true;
 }
 
-void *hashy_get(HashTable *table, const char *key) {
+void *
+hashy_get(HashTable *table, const char *key) {
     unsigned long index = hash_string(key) % table->capacity;
     HashEntry *entry;
 
@@ -107,7 +118,8 @@ void *hashy_get(HashTable *table, const char *key) {
     return NULL; // Key not found
 }
 
-bool hashy_remove(HashTable *table, const char *key) {
+bool
+hashy_remove(HashTable *table, const char *key) {
     unsigned long index = hash_string(key) % table->capacity;
     HashEntry *entry;
 
@@ -143,14 +155,16 @@ bool hashy_remove(HashTable *table, const char *key) {
     return false; // Key not found
 }
 
-HashTableIterator hashy_iter(HashTable *table) {
+HashTableIterator
+hashy_iter(HashTable *table) {
     HashTableIterator iterator;
     iterator.table = table;
     iterator.current_index = 0;
     return iterator;
 }
 
-const char *hashy_next(HashTableIterator *iterator, void **value) {
+const char *
+hashy_next(HashTableIterator *iterator, void **value) {
     while (iterator->current_index < iterator->table->capacity) {
         HashEntry *entry = &iterator->table->entries[iterator->current_index];
         iterator->current_index++;
@@ -160,5 +174,5 @@ const char *hashy_next(HashTableIterator *iterator, void **value) {
         }
     }
     *value = NULL;
-    return NULL; // End of table reached
+    return NULL;
 }
