@@ -7,18 +7,21 @@
 #endif
 // !!!! The only needed header here. !!!!
 #include "../src/souffle.h"
+
 SETUP(main_suite, TestCase1) {
     int *data = malloc(sizeof(int));
     assert(data);
     *data = 5;
     *ctx = data;
 }
+
 TEST(main_suite, TestCase1) {
     ASSERT_TRUE(true);
     int *data = (int *)*ctx;
     ASSERT_NOT_NULL(data);
     ASSERT_EQ(*data, 5);
 }
+
 TEARDOWN(main_suite, TestCase1) { free(*ctx); }
 
 TEST(main_suite, test_number_eq) {
