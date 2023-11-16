@@ -98,7 +98,6 @@ ____________________________________________________________________________
 #### Requirements:
 
 - A modern C compiler such as GCC and Clang (Souffle currently targets C23 but clang-cl is also supported).
-- khash provided by klib (available in git submodule) for test registeration.
 
 
 To build Souffle, simply create your test file and add souffle.c next to it when compiling.
@@ -125,7 +124,6 @@ To use Souffle inside your meson project you can use the following:
 url = https://codeberg.org/QuincePie/souffle.git
 revision = head
 depth = 1
-clone-recursive = true
 
 [provide]
 souffle = souffle_dep
