@@ -17,7 +17,7 @@ HashTable *
 hashy_init();
 void
 hashy_free(HashTable *table);
-bool
+int
 hashy_insert(HashTable *table, const char *key, void *value);
 void *
 hashy_get(HashTable *table, const char *key);

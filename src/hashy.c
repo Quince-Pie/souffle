@@ -72,11 +72,15 @@ hashy_resize(HashTable *table, size_t new_capacity) {
     return true;
 }
 
-bool
+/// RETS:
+/// 0: insert success.
+/// 1: duplicate key (key already exist).
+/// 2: allocation error (resize).
+int
 hashy_insert(HashTable *table, const char *key, void *value) {
     if (table->size >= table->capacity * MAX_LOAD_FACTOR) {
         if (!hashy_resize(table, table->capacity * 2)) {
-            return false;
+            return 2;
         }
     }
 
@@ -85,9 +89,8 @@ hashy_insert(HashTable *table, const char *key, void *value) {
 
     while (entry->key != NULL) {
         if (strcmp(entry->key, key) == 0) {
-            // Key already exists, update value
-            entry->value = value;
-            return true;
+            // Key already exists
+            return 1;
         }
         index = (index + 1) % table->capacity;
         entry = &table->entries[index];
@@ -97,9 +100,12 @@ hashy_insert(HashTable *table, const char *key, void *value) {
     entry->key = strdup(key);
     entry->value = value;
     table->size++;
-    return true;
+    return 0;
 }
 
+/// RETS:
+/// NULL: key not found / invalid.
+/// ptr: value ptr.
 void *
 hashy_get(HashTable *table, const char *key) {
     unsigned long index = hash_string(key) % table->capacity;
@@ -108,23 +114,55 @@ hashy_get(HashTable *table, const char *key) {
     for (size_t i = 0; i < table->capacity; i++) {
         entry = &table->entries[index];
         if (entry->key == NULL) {
-            return NULL; // Key not found
+            return NULL;
         }
         if (strcmp(entry->key, key) == 0) {
-            return entry->value; // Key found
+            return entry->value;
         }
         index = (index + 1) % table->capacity;
     }
-    return NULL; // Key not found
+    return NULL;
+}
+
+// https://github.com/senderista/hashtable-benchmarks/blob/master/src/main/java/set/int64/LPLongHashSet.java#L184
+static void
+shift_entries(HashTable *table, unsigned long start) {
+    unsigned long dst = start;
+    size_t shift = 1;
+
+    while (true) {
+        unsigned long src = (dst + shift) % table->capacity;
+        if (table->entries[src].key == NULL) {
+            break;
+        }
+
+        unsigned long preferred = hash_string(table->entries[src].key) % table->capacity;
+        bool reachable;
+        if (src <= dst) {
+            reachable = (preferred <= dst && preferred > src);
+        } else {
+            reachable = (preferred <= dst || preferred > src);
+        }
+
+        if (reachable) {
+            table->entries[dst] = table->entries[src];
+            table->entries[src].key = NULL;
+            table->entries[src].value = NULL;
+            dst = (dst + shift) % table->capacity;
+            shift = 1;
+        } else {
+            ++shift;
+        }
+    }
 }
 
 bool
 hashy_remove(HashTable *table, const char *key) {
     unsigned long index = hash_string(key) % table->capacity;
-    HashEntry *entry;
 
+    // Find the entry to remove
     for (size_t i = 0; i < table->capacity; i++) {
-        entry = &table->entries[index];
+        HashEntry *entry = &table->entries[index];
         if (entry->key == NULL) {
             return false; // Key not found
         }
@@ -135,19 +173,7 @@ hashy_remove(HashTable *table, const char *key) {
             entry->value = NULL;
             table->size--;
 
-            // Shift subsequent entries back to fill the gap
-            unsigned long nextIndex;
-            for (size_t j = 1; j < table->capacity; j++) {
-                nextIndex = (index + j) % table->capacity;
-                HashEntry *nextEntry = &table->entries[nextIndex];
-                if (nextEntry->key == NULL) {
-                    break;
-                }
-                table->entries[index] = *nextEntry; // Shift entry
-                nextEntry->key = NULL;
-                nextEntry->value = NULL;
-                index = nextIndex;
-            }
+            shift_entries(table, index);
             return true;
         }
         index = (index + 1) % table->capacity;
