@@ -1,5 +1,6 @@
 #include <signal.h>
 #ifndef _WIN32
+#include <sanitizer/asan_interface.h>
 #include <unistd.h>
 #else
 #include <Windows.h>
@@ -33,6 +34,10 @@ TEST(main_suite, test_number_eq) {
 TEST(main_suite, exception_test) {
 // ASSERT_EQ(12, 1);
 #ifndef _WIN32
+#if __has_feature(address_sanitizer) || defined(__SANITIZE_ADDRESS__)
+    LOG_MSG("ASAN is ON, skipping...\n");
+    SKIP_TEST();
+#endif
     raise(SIGSEGV);
 #else
     RaiseException(EXCEPTION_ACCESS_VIOLATION, 0, 0, NULL);
