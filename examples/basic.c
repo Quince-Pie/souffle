@@ -100,5 +100,6 @@ TEST(main_suite, string_test) { ASSERT_STR_EQ("Hello, World", "Hello World!"); }
 
 TEST(main_suite, log_on_pass) {
     ASSERT_EQ(1, 1);
-    LOG_MSG("\t  This is a log message\n");
+    LOG_MSG("This is a log message\n");
+    LOG_MSG("This is a second log message\n");
 }

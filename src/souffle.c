@@ -127,6 +127,10 @@ void
 souffle_log_msg_raw(StatusInfo *status_info, const char *fmt, ...) {
     if (status_info->msg == NULL) {
         status_info->msg = string_init();
+        string_append(status_info->msg, "\t  ");
+    }
+    if (status_info->msg->buf[status_info->msg->len - 1] == '\n') {
+        string_append(status_info->msg, "\t  ");
     }
     va_list args;
     va_start(args, fmt);
