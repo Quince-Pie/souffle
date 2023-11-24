@@ -100,16 +100,16 @@ ____________________________________________________________________________
 - A modern C compiler such as GCC and Clang (Souffle currently targets C23 but clang-cl is also supported).
 
 
-To build Souffle, simply create your test file and add souffle.c next to it when compiling.
+To build Souffle, simply create your test file and add souffle.c and hashy.c next to it when compiling.
 
 ```sh
-  $ gcc examples/basic.c souffle.c -g    # Optional: -DSOUFFLE_NOCOLOR to disable color output
+  $ gcc examples/basic.c src/souffle.c src/hashy.c -g    # Optional: -DSOUFFLE_NOCOLOR to disable color output
 ```
 
 Darwin systems require additional linker flag due to the weak support to weak attributes in the linker.
 
 ```sh
-  $ clang examples/basic.c souffle.c -g -undefined dynamic_lookup
+  $ clang examples/basic.c src/souffle.c src/hashy.c -g -undefined dynamic_lookup
 ```
 
 
